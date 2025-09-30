@@ -5,10 +5,9 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-  standalone: true,
-  selector: 'app-login',
-  imports: [CommonModule, FormsModule],
-  template: `
+    selector: 'app-login',
+    imports: [CommonModule, FormsModule],
+    template: `
   <div class="login">
     <h2>ProcurePro Login</h2>
     <form (ngSubmit)="submit()">
@@ -19,7 +18,7 @@ import { AuthService } from '../../services/auth.service';
     <p class="hint">Default admin: admin@procurepro.local / Admin#12345</p>
   </div>
   `,
-  styles: [`.login{max-width:360px;margin:6rem auto;display:flex;flex-direction:column;gap:12px}`]
+    styles: [`.login{max-width:360px;margin:6rem auto;display:flex;flex-direction:column;gap:12px}`]
 })
 export class LoginComponent {
   email = 'admin@procurepro.local';
