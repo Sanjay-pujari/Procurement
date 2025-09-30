@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcurePro.Api", "ProcurePro.Api.csproj", "{F85315C0-EC0A-78EF-1139-7EC0F6D016EF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F85315C0-EC0A-78EF-1139-7EC0F6D016EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F85315C0-EC0A-78EF-1139-7EC0F6D016EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F85315C0-EC0A-78EF-1139-7EC0F6D016EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F85315C0-EC0A-78EF-1139-7EC0F6D016EF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {051A410D-3439-4D0E-8272-FDF2EEFB6941}
+	EndGlobalSection
+EndGlobal
