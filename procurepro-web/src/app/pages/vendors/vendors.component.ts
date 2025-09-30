@@ -5,10 +5,9 @@ import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  standalone: true,
-  selector: 'app-vendors',
-  imports: [CommonModule, FormsModule],
-  template: `
+    selector: 'app-vendors',
+    imports: [CommonModule, FormsModule],
+    template: `
   <h2>Vendors</h2>
   <form (ngSubmit)="create()">
     <input [(ngModel)]="form.companyName" name="companyName" placeholder="Company" required />
@@ -24,7 +23,7 @@ import { FormsModule } from '@angular/forms';
     </tr>
   </table>
   `,
-  styles: [`table{width:100%;margin-top:12px;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}`]
+    styles: [`table{width:100%;margin-top:12px;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}`]
 })
 export class VendorsComponent {
   private http = inject(HttpClient);
