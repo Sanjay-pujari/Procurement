@@ -1,15 +1,17 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-dashboard',
-    imports: [CommonModule],
+    imports: [],
     template: `
   <h2>Dashboard</h2>
   <div class="cards">
-    <div class="card" *ngFor="let c of cards">{{c.label}}: <b>{{c.value}}</b></div>
+    @for (c of cards; track c) {
+      <div class="card">{{c.label}}: <b>{{c.value}}</b></div>
+    }
   </div>
   `,
     styles: [`.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.card{padding:12px;border:1px solid #ddd;border-radius:8px}`]

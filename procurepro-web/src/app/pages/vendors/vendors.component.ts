@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-vendors',
-    imports: [CommonModule, FormsModule],
+    imports: [FormsModule],
     template: `
   <h2>Vendors</h2>
   <form (ngSubmit)="create()">
@@ -17,10 +17,12 @@ import { FormsModule } from '@angular/forms';
   </form>
   <table>
     <tr><th>Company</th><th>Email</th><th>Category</th><th>Active</th><th></th></tr>
-    <tr *ngFor="let v of vendors">
-      <td>{{v.companyName}}</td><td>{{v.email}}</td><td>{{v.category}}</td><td>{{v.isActive}}</td>
-      <td><button (click)="deactivate(v)">Deactivate</button></td>
-    </tr>
+    @for (v of vendors; track v) {
+      <tr>
+        <td>{{v.companyName}}</td><td>{{v.email}}</td><td>{{v.category}}</td><td>{{v.isActive}}</td>
+        <td><button (click)="deactivate(v)">Deactivate</button></td>
+      </tr>
+    }
   </table>
   `,
     styles: [`table{width:100%;margin-top:12px;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}`]
