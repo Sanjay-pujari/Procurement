@@ -87,10 +87,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularClient", policy =>
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
+        policy.AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials());
+              .AllowAnyOrigin());
 });
 
 builder.Services.AddScoped<INotificationService, NotificationService>();
