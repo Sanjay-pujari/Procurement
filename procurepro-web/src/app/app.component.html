@@ -33,7 +33,7 @@
     <div class="user-section">
       <div class="user-info">
         <strong>{{ auth.token?.displayName }}</strong>
-        <small>{{ auth.token?.roles[0] }}</small>
+        <small>{{ auth.token?.roles?.[0] || 'User' }}</small>
       </div>
       <button class="logout-btn" (click)="logout()">Logout</button>
     </div>
