@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BidService, Bid, BidItem } from '../../services/bid.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-bids',
@@ -192,7 +193,7 @@ export class BidsComponent implements OnInit {
     this.currentBid.totalAmount = this.calculateTotal();
     this.currentBid.score = 0;
 
-    const action = this.isEditing
+    const action: Observable<any> = this.isEditing
       ? this.bidService.update(this.currentBid.id!, this.currentBid)
       : this.bidService.create(this.currentBid);
 

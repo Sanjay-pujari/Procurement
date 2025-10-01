@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InvoiceService, Invoice } from '../../services/invoice.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-invoices',
@@ -176,7 +177,7 @@ export class InvoicesComponent implements OnInit {
   }
 
   saveInvoice() {
-    const action = this.isEditing
+    const action: Observable<any> = this.isEditing
       ? this.invoiceService.update(this.currentInvoice.id!, this.currentInvoice)
       : this.invoiceService.create(this.currentInvoice);
 

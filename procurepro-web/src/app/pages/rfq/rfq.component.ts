@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RFQService, RFQ, RFQItem, RFQVendor } from '../../services/rfq.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-rfq',
@@ -182,7 +183,7 @@ export class RFQComponent implements OnInit {
   }
 
   saveRFQ() {
-    const action = this.isEditing
+    const action: Observable<any> = this.isEditing
       ? this.rfqService.update(this.currentRFQ.id!, this.currentRFQ)
       : this.rfqService.create(this.currentRFQ);
 

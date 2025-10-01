@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PurchaseOrderService, PurchaseOrder } from '../../services/purchase-order.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-purchase-orders',
@@ -176,7 +177,7 @@ export class PurchaseOrdersComponent implements OnInit {
   }
 
   savePO() {
-    const action = this.isEditing
+    const action: Observable<any> = this.isEditing
       ? this.poService.update(this.currentPO.id!, this.currentPO)
       : this.poService.create(this.currentPO);
 
