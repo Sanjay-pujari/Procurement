@@ -24,19 +24,7 @@ namespace ProcurePro.Api.Modules
         public decimal UnitPrice { get; set; }
     }
 
-    public enum POStatus { Issued, Acknowledged, Completed }
-
-    public class PurchaseOrder
-    {
-        public Guid Id { get; set; }
-        public Guid BidId { get; set; }
-        public POStatus Status { get; set; } = POStatus.Issued;
-        public string? AmendmentsJson { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    }
-
     public enum PaymentStatus { Pending, PartiallyPaid, Paid }
-
     public class Invoice
     {
         public Guid Id { get; set; }

@@ -43,9 +43,10 @@ export interface VendorStatusChange {
 
 export interface VendorPurchaseOrder {
   id: string;
-  bidId: string;
+  purchaseOrderNumber: string;
   status: string;
   createdAt: string;
+  completedAt?: string;
 }
 
 export interface VendorInvoice {

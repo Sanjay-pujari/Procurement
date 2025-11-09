@@ -128,10 +128,17 @@ namespace ProcurePro.Api.Controllers
             if (request.Items == null || !request.Items.Any())
                 throw new InvalidOperationException("Quotation requires at least one item.");
 
+            if (request.TaxAmount < 0)
+                throw new InvalidOperationException("Tax amount cannot be negative.");
+
             foreach (var item in request.Items)
             {
                 if (!rfqItems.ContainsKey(item.RfqItemId))
                     throw new InvalidOperationException("Invalid RFQ item specified in quotation.");
+                if (item.Quantity <= 0)
+                    throw new InvalidOperationException("Quoted quantities must be greater than zero.");
+                if (item.UnitPrice < 0)
+                    throw new InvalidOperationException("Unit price cannot be negative.");
             }
 
             var quotation = await _context.VendorQuotations
@@ -205,6 +212,7 @@ namespace ProcurePro.Api.Controllers
 
             rfqVendor.Status = RfqVendorStatus.QuoteSubmitted;
             rfqVendor.QuoteSubmittedAt = DateTime.UtcNow;
+            rfqVendor.AcknowledgedAt ??= DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return quotation;

@@ -3,12 +3,35 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 
-export interface PurchaseOrder {
-  id?: string;
-  bidId: string;
+export interface PurchaseOrderSummary {
+  id: string;
+  purchaseOrderNumber: string;
+  vendorId: string;
+  vendorQuotationId: string;
   status: number;
+  createdAt: string;
+  acknowledgedAt?: string;
+  completedAt?: string;
+}
+
+export interface PurchaseOrderItem {
+  rfqItemId: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  notes?: string;
+}
+
+export interface PurchaseOrderDetail extends PurchaseOrderSummary {
+  currency: string;
+  totalAmount: number;
+  items: PurchaseOrderItem[];
   amendmentsJson?: string;
-  createdAt?: string;
+}
+
+export interface IssuePurchaseOrderRequest {
+  vendorQuotationId: string;
+  amendmentsJson?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -17,28 +40,16 @@ export class PurchaseOrderService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<PurchaseOrder[]> {
-    return this.http.get<PurchaseOrder[]>(this.apiUrl);
+  getAll(): Observable<PurchaseOrderSummary[]> {
+    return this.http.get<PurchaseOrderSummary[]>(this.apiUrl);
   }
 
-  getById(id: string): Observable<PurchaseOrder> {
-    return this.http.get<PurchaseOrder>(`${this.apiUrl}/${id}`);
+  getById(id: string): Observable<PurchaseOrderDetail> {
+    return this.http.get<PurchaseOrderDetail>(`${this.apiUrl}/${id}`);
   }
 
-  getByBid(bidId: string): Observable<PurchaseOrder> {
-    return this.http.get<PurchaseOrder>(`${this.apiUrl}/by-bid/${bidId}`);
-  }
-
-  create(po: PurchaseOrder): Observable<PurchaseOrder> {
-    return this.http.post<PurchaseOrder>(this.apiUrl, po);
-  }
-
-  update(id: string, po: PurchaseOrder): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, po);
-  }
-
-  delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  issue(request: IssuePurchaseOrderRequest): Observable<PurchaseOrderDetail> {
+    return this.http.post<PurchaseOrderDetail>(`${this.apiUrl}/issue`, request);
   }
 
   acknowledge(id: string): Observable<void> {

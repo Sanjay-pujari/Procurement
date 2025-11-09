@@ -23,6 +23,7 @@ namespace ProcurePro.Api.Modules
 
         public List<VendorQuotationItem> Items { get; set; } = new();
         public List<VendorQuotationAttachment> Attachments { get; set; } = new();
+        public PurchaseOrder? PurchaseOrder { get; set; }
     }
 
     public class VendorQuotationItem

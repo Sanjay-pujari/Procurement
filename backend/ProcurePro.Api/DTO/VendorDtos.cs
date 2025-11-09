@@ -33,9 +33,10 @@ namespace ProcurePro.Api.DTO
 
     public record VendorPurchaseOrderDto(
         Guid Id,
-        Guid BidId,
+        string PurchaseOrderNumber,
         string Status,
-        DateTime CreatedAt);
+        DateTime CreatedAt,
+        DateTime? CompletedAt);
 
     public record VendorInvoiceDto(
         Guid Id,

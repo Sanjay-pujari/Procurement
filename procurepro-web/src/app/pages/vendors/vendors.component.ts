@@ -132,14 +132,16 @@ import {
         <h3>Purchase Orders</h3>
         <table class="mini-table" *ngIf="selectedVendor.history.purchaseOrders.length; else noPo">
           <tr>
-            <th>ID</th>
+            <th>PO Number</th>
             <th>Status</th>
-            <th>Created</th>
+            <th>Issued</th>
+            <th>Completed</th>
           </tr>
           <tr *ngFor="let po of selectedVendor.history.purchaseOrders">
-            <td>{{ po.id }}</td>
+            <td>{{ po.purchaseOrderNumber }}</td>
             <td>{{ po.status }}</td>
             <td>{{ po.createdAt | date:'short' }}</td>
+            <td>{{ po.completedAt ? (po.completedAt | date:'short') : '—' }}</td>
           </tr>
         </table>
         <ng-template #noPo>

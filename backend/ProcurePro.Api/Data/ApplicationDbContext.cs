@@ -120,6 +120,23 @@ namespace ProcurePro.Api.Data
                 .HasForeignKey(i => i.BidId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<PurchaseOrder>()
+                .HasIndex(po => po.PurchaseOrderNumber)
+                .IsUnique()
+                .HasFilter("[PurchaseOrderNumber] IS NOT NULL");
+
+            builder.Entity<PurchaseOrder>()
+                .HasOne(po => po.Vendor)
+                .WithMany()
+                .HasForeignKey(po => po.VendorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<PurchaseOrder>()
+                .HasOne(po => po.VendorQuotation)
+                .WithOne(vq => vq.PurchaseOrder)
+                .HasForeignKey<PurchaseOrder>(po => po.VendorQuotationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.Entity<PurchaseRequisition>()
                 .HasIndex(pr => pr.PrNumber)
                 .IsUnique();

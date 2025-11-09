@@ -122,14 +122,19 @@ interface AttachmentDraft {
               </label>
             </div>
 
+            <div class="totals">
+              <span>Subtotal: {{ currentSubtotal | currency:quote.currency }}</span>
+              <span>Total (incl. tax): {{ currentTotal | currency:quote.currency }}</span>
+            </div>
+
             <div class="section">
               <h5>Pricing</h5>
               <table class="mini-table">
                 <tr><th>Description</th><th>Quantity</th><th>Unit Price</th><th>Notes</th></tr>
                 <tr *ngFor="let item of quote.items">
                   <td>{{ item.description }}</td>
-                  <td><input type="number" [(ngModel)]="item.quantity" name="qty-{{ item.rfqItemId }}" min="0" step="0.001" /></td>
-                  <td><input type="number" [(ngModel)]="item.unitPrice" name="price-{{ item.rfqItemId }}" min="0" step="0.01" /></td>
+                  <td><input type="number" [(ngModel)]="item.quantity" name="qty-{{ item.rfqItemId }}" min="0" step="0.001" (input)="calculateTotals()" /></td>
+                  <td><input type="number" [(ngModel)]="item.unitPrice" name="price-{{ item.rfqItemId }}" min="0" step="0.01" (input)="calculateTotals()" /></td>
                   <td><input type="text" [(ngModel)]="item.notes" name="notes-{{ item.rfqItemId }}" /></td>
                 </tr>
               </table>
@@ -147,7 +152,9 @@ interface AttachmentDraft {
 
             <div class="actions">
               <button class="btn primary" type="submit" [disabled]="submitting">Submit Quote</button>
-              <span class="info" *ngIf="selected?.existingQuotation">Last submitted on {{ selected.existingQuotation?.expectedDeliveryDate | date:'medium' }}</span>
+              <span class="info" *ngIf="selected?.existingQuotation">
+                Last submitted total {{ selected.existingQuotation?.totalAmount | currency:selected.existingQuotation?.currency }} on {{ selected.existingQuotation?.submittedByAdmin ? 'admin upload' : (selected.existingQuotation?.expectedDeliveryDate | date:'medium') }}
+              </span>
             </div>
           </form>
         </div>
@@ -194,6 +201,7 @@ interface AttachmentDraft {
     textarea { resize:vertical; }
     .section { margin-top:1.5rem; }
     .attachment-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)) auto; gap:0.5rem; margin-bottom:0.5rem; }
+    .totals { display:flex; gap:1rem; font-weight:600; color:#1f2937; margin-bottom:1rem; }
     .empty-card { background:#f9fafb; border-radius:12px; padding:2rem; text-align:center; color:#6b7280; box-shadow: inset 0 0 0 1px #e5e7eb; }
     .info { color:#0f766e; font-size:0.85rem; }
     @media(max-width:1100px){ .layout { grid-template-columns:1fr; } .panel { max-height:none; } }
@@ -217,6 +225,8 @@ export class VendorPortalComponent implements OnInit {
   } = this.emptyQuote();
 
   submitting = false;
+  currentSubtotal = 0;
+  currentTotal = 0;
 
   constructor(private vendorPortal: VendorPortalService) {}
 
@@ -277,6 +287,7 @@ export class VendorPortalComponent implements OnInit {
         attachments: []
       };
     }
+    this.calculateTotals();
   }
 
   submitQuote(): void {
@@ -320,10 +331,12 @@ export class VendorPortalComponent implements OnInit {
 
   addAttachment(): void {
     this.quote.attachments.push({ fileName: '', storageUrl: '' });
+    this.calculateTotals();
   }
 
   removeAttachment(index: number): void {
     this.quote.attachments.splice(index, 1);
+    this.calculateTotals();
   }
 
   statusLabel(status: RfqVendorStatus): string {
@@ -347,6 +360,13 @@ export class VendorPortalComponent implements OnInit {
       items: [] as QuoteItemDraft[],
       attachments: [] as AttachmentDraft[]
     };
+  }
+
+  calculateTotals(): void {
+    const subtotal = this.quote.items.reduce((acc, item) => acc + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0);
+    const tax = Number(this.quote.taxAmount || 0);
+    this.currentSubtotal = subtotal;
+    this.currentTotal = subtotal + tax;
   }
 }
 

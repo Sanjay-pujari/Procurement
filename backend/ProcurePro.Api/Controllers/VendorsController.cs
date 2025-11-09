@@ -63,17 +63,16 @@ namespace ProcurePro.Api.Controllers
 
             if (vendor == null) return NotFound();
 
-            var purchaseOrders = await (from po in _db.PurchaseOrders.AsNoTracking()
-                                        join bid in _db.Bids.AsNoTracking() on po.BidId equals bid.Id
-                                        where bid.VendorId == id
-                                        orderby po.CreatedAt descending
-                                        select new VendorPurchaseOrderDto(po.Id, po.BidId, po.Status.ToString(), po.CreatedAt))
-                                        .ToListAsync();
+            var purchaseOrders = await _db.PurchaseOrders
+                .AsNoTracking()
+                .Where(po => po.VendorId == id)
+                .OrderByDescending(po => po.CreatedAt)
+                .Select(po => new VendorPurchaseOrderDto(po.Id, po.PurchaseOrderNumber!, po.Status.ToString(), po.CreatedAt, po.CompletedAt))
+                .ToListAsync();
 
             var invoices = await (from invoice in _db.Invoices.AsNoTracking()
                                   join po in _db.PurchaseOrders.AsNoTracking() on invoice.PurchaseOrderId equals po.Id
-                                  join bid in _db.Bids.AsNoTracking() on po.BidId equals bid.Id
-                                  where bid.VendorId == id
+                                  where po.VendorId == id
                                   orderby invoice.SubmittedAt descending
                                   select new VendorInvoiceDto(invoice.Id, invoice.PurchaseOrderId, invoice.Amount, invoice.PaymentStatus.ToString(), invoice.SubmittedAt))
                                   .ToListAsync();

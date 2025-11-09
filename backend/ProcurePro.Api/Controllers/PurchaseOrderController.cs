@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProcurePro.Api.Data;
+using ProcurePro.Api.DTO;
 using ProcurePro.Api.Modules;
+using System.Linq;
 
 namespace ProcurePro.Api.Controllers
 {
@@ -19,98 +21,137 @@ namespace ProcurePro.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PurchaseOrder>>> GetAll()
+        public async Task<ActionResult<IEnumerable<PurchaseOrderSummaryDto>>> GetAll()
         {
-            var pos = await _context.PurchaseOrders
-                .OrderByDescending(p => p.CreatedAt)
+            var purchaseOrders = await _context.PurchaseOrders
+                .AsNoTracking()
+                .Include(po => po.VendorQuotation)
+                .OrderByDescending(po => po.CreatedAt)
+                .Select(po => new PurchaseOrderSummaryDto(
+                    po.Id,
+                    po.PurchaseOrderNumber!,
+                    po.VendorId,
+                    po.VendorQuotationId,
+                    po.Status,
+                    po.CreatedAt,
+                    po.AcknowledgedAt,
+                    po.CompletedAt))
                 .ToListAsync();
-            return Ok(pos);
+
+            return Ok(purchaseOrders);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PurchaseOrder>> Get(Guid id)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<PurchaseOrderDetailDto>> Get(Guid id)
         {
-            var po = await _context.PurchaseOrders.FindAsync(id);
+            var po = await _context.PurchaseOrders
+                .AsNoTracking()
+                .Include(p => p.VendorQuotation)
+                    .ThenInclude(q => q.Items)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (po == null) return NotFound();
-            return Ok(po);
+
+            return Ok(MapDetail(po));
         }
 
-        [HttpGet("by-bid/{bidId}")]
-        public async Task<ActionResult<PurchaseOrder>> GetByBid(Guid bidId)
-        {
-            var po = await _context.PurchaseOrders.FirstOrDefaultAsync(p => p.BidId == bidId);
-            if (po == null) return NotFound();
-            return Ok(po);
-        }
-
-        [HttpPost]
+        [HttpPost("issue")]
         [Authorize(Roles = "Admin,ProcurementManager")]
-        public async Task<ActionResult<PurchaseOrder>> Create(PurchaseOrder purchaseOrder)
+        public async Task<ActionResult<PurchaseOrderDetailDto>> Issue([FromBody] IssuePurchaseOrderRequest request)
         {
-            purchaseOrder.Id = Guid.NewGuid();
-            purchaseOrder.CreatedAt = DateTime.UtcNow;
-            purchaseOrder.Status = POStatus.Issued;
+            var quotation = await _context.VendorQuotations
+                .Include(q => q.Items)
+                .FirstOrDefaultAsync(q => q.Id == request.VendorQuotationId);
 
-            _context.PurchaseOrders.Add(purchaseOrder);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(Get), new { id = purchaseOrder.Id }, purchaseOrder);
-        }
+            if (quotation == null)
+                return NotFound("Quotation not found.");
 
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,ProcurementManager")]
-        public async Task<IActionResult> Update(Guid id, PurchaseOrder purchaseOrder)
-        {
-            if (id != purchaseOrder.Id) return BadRequest();
+            var existingPo = await _context.PurchaseOrders
+                .FirstOrDefaultAsync(po => po.VendorQuotationId == quotation.Id);
 
-            _context.Entry(purchaseOrder).State = EntityState.Modified;
-            try
+            if (existingPo != null)
+                return Conflict("Purchase order already issued for this quotation.");
+
+            var po = new PurchaseOrder
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _context.PurchaseOrders.AnyAsync(e => e.Id == id))
-                    return NotFound();
-                throw;
-            }
-            return NoContent();
-        }
+                Id = Guid.NewGuid(),
+                VendorQuotationId = quotation.Id,
+                VendorId = quotation.VendorId,
+                PurchaseOrderNumber = await GeneratePoNumberAsync(),
+                CreatedAt = DateTime.UtcNow,
+                AmendmentsJson = request.AmendmentsJson,
+                Status = PurchaseOrderStatus.Issued
+            };
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var po = await _context.PurchaseOrders.FindAsync(id);
-            if (po == null) return NotFound();
-
-            _context.PurchaseOrders.Remove(po);
+            _context.PurchaseOrders.Add(po);
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            return CreatedAtAction(nameof(Get), new { id = po.Id }, MapDetail(po, quotation));
         }
 
-        [HttpPost("{id}/acknowledge")]
+        [HttpPost("{id:guid}/acknowledge")]
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> Acknowledge(Guid id)
         {
-            var po = await _context.PurchaseOrders.FindAsync(id);
+            var po = await _context.PurchaseOrders.FirstOrDefaultAsync(p => p.Id == id);
             if (po == null) return NotFound();
 
-            po.Status = POStatus.Acknowledged;
+            po.Status = PurchaseOrderStatus.Acknowledged;
+            po.AcknowledgedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
-        [HttpPost("{id}/complete")]
+        [HttpPost("{id:guid}/complete")]
         [Authorize(Roles = "Admin,ProcurementManager")]
         public async Task<IActionResult> Complete(Guid id)
         {
-            var po = await _context.PurchaseOrders.FindAsync(id);
+            var po = await _context.PurchaseOrders.FirstOrDefaultAsync(p => p.Id == id);
             if (po == null) return NotFound();
 
-            po.Status = POStatus.Completed;
+            po.Status = PurchaseOrderStatus.Completed;
+            po.CompletedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
             return NoContent();
+        }
+
+        private async Task<string> GeneratePoNumberAsync()
+        {
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
+            var poNumber = $"PO-{timestamp}";
+            var exists = await _context.PurchaseOrders.AnyAsync(po => po.PurchaseOrderNumber == poNumber);
+            if (!exists) return poNumber;
+
+            return $"PO-{timestamp}-{Guid.NewGuid().ToString("N")[..4].ToUpper()}";
+        }
+
+        private PurchaseOrderDetailDto MapDetail(PurchaseOrder po, VendorQuotation? quotation = null)
+        {
+            quotation ??= _context.VendorQuotations
+                .AsNoTracking()
+                .Include(q => q.Items)
+                .First(q => q.Id == po.VendorQuotationId);
+
+            return new PurchaseOrderDetailDto(
+                po.Id,
+                po.PurchaseOrderNumber!,
+                po.VendorId,
+                po.VendorQuotationId,
+                po.Status,
+                po.CreatedAt,
+                po.AcknowledgedAt,
+                po.CompletedAt,
+                quotation.Currency,
+                quotation.TotalAmount,
+                quotation.Items.Select(i => new PurchaseOrderItemDto(
+                    i.RFQItemId,
+                    i.Quantity,
+                    i.UnitPrice,
+                    i.LineTotal,
+                    i.Notes)).ToList(),
+                po.AmendmentsJson);
         }
     }
 }
-

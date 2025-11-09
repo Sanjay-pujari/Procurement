@@ -346,18 +346,13 @@ namespace ProcurePro.Api.Data
                     new PurchaseOrder
                     {
                         Id = Guid.NewGuid(),
-                        BidId = bids[0].Id,
-                        Status = POStatus.Acknowledged,
+                        VendorQuotationId = sampleQuote.Id,
+                        VendorId = sampleQuote.VendorId,
+                        PurchaseOrderNumber = "PO-SEED-001",
+                        Status = PurchaseOrderStatus.Acknowledged,
                         AmendmentsJson = null,
-                        CreatedAt = DateTime.UtcNow.AddDays(-2)
-                    },
-                    new PurchaseOrder
-                    {
-                        Id = Guid.NewGuid(),
-                        BidId = bids[2].Id,
-                        Status = POStatus.Issued,
-                        AmendmentsJson = null,
-                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                        CreatedAt = DateTime.UtcNow.AddDays(-2),
+                        AcknowledgedAt = DateTime.UtcNow.AddDays(-2)
                     }
                 };
                 await _context.PurchaseOrders.AddRangeAsync(purchaseOrders);
@@ -370,23 +365,15 @@ namespace ProcurePro.Api.Data
                     {
                         Id = Guid.NewGuid(),
                         PurchaseOrderId = purchaseOrders[0].Id,
-                        Amount = 22500m, // 50% advance
-                        PaymentStatus = PaymentStatus.Paid,
+                        Amount = 49750m,
+                        PaymentStatus = PaymentStatus.PartiallyPaid,
                         SubmittedAt = DateTime.UtcNow.AddDays(-1)
                     },
                     new Invoice
                     {
                         Id = Guid.NewGuid(),
                         PurchaseOrderId = purchaseOrders[0].Id,
-                        Amount = 22500m, // Remaining 50%
-                        PaymentStatus = PaymentStatus.Pending,
-                        SubmittedAt = DateTime.UtcNow
-                    },
-                    new Invoice
-                    {
-                        Id = Guid.NewGuid(),
-                        PurchaseOrderId = purchaseOrders[1].Id,
-                        Amount = 125000m,
+                        Amount = 49750m,
                         PaymentStatus = PaymentStatus.Pending,
                         SubmittedAt = DateTime.UtcNow
                     }
