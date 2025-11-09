@@ -68,6 +68,56 @@ namespace ProcurePro.Api.Data
                 await _context.SaveChangesAsync();
             }
 
+            // Seed Sample Purchase Requisitions
+            if (!await _context.PurchaseRequisitions.AnyAsync())
+            {
+                var requester = await _users.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+                if (requester != null)
+                {
+                    var requisition = new PurchaseRequisition
+                    {
+                        Id = Guid.NewGuid(),
+                        PrNumber = $"PR-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                        Title = "Office Laptop Refresh",
+                        Description = "Procurement of new laptops for onboarding batch.",
+                        CostCenter = "IT-001",
+                        Department = "Information Technology",
+                        Urgency = PurchaseRequisitionUrgency.High,
+                        NeededBy = DateTime.UtcNow.AddDays(30),
+                        RequestedByUserId = requester.Id,
+                        Status = PurchaseRequisitionStatus.PendingApproval,
+                        CreatedAt = DateTime.UtcNow.AddDays(-3),
+                        SubmittedAt = DateTime.UtcNow.AddDays(-3),
+                        Items = new List<PurchaseRequisitionItem>
+                        {
+                            new PurchaseRequisitionItem { Id = Guid.NewGuid(), ItemName = "Laptop", Specification = "14\" i7/16GB/512GB SSD", Quantity = 15, UnitOfMeasure = "Units", EstimatedUnitCost = 1200m },
+                            new PurchaseRequisitionItem { Id = Guid.NewGuid(), ItemName = "Docking Station", Specification = "USB-C Dual Monitor Dock", Quantity = 15, UnitOfMeasure = "Units", EstimatedUnitCost = 250m }
+                        },
+                        Approvals = new List<PurchaseRequisitionApproval>()
+                    };
+
+                    var approver = await _users.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+                    if (approver != null)
+                    {
+                        requisition.Approvals.Add(new PurchaseRequisitionApproval
+                        {
+                            Id = Guid.NewGuid(),
+                            Sequence = 1,
+                            ApproverUserId = approver.Id,
+                            Status = PurchaseRequisitionApprovalStatus.Approved,
+                            ActionedAt = DateTime.UtcNow.AddDays(-2),
+                            Comments = "Approved as seeded data."
+                        });
+
+                        requisition.Status = PurchaseRequisitionStatus.Approved;
+                        requisition.ApprovedAt = DateTime.UtcNow.AddDays(-2);
+                    }
+
+                    await _context.PurchaseRequisitions.AddAsync(requisition);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             // Seed Sample RFQs
             if (!await _context.RFQs.AnyAsync())
             {

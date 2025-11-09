@@ -23,6 +23,10 @@ namespace ProcurePro.Api.Data
         public DbSet<BidItem> BidItems => Set<BidItem>();
         public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
+        public DbSet<PurchaseRequisition> PurchaseRequisitions => Set<PurchaseRequisition>();
+        public DbSet<PurchaseRequisitionItem> PurchaseRequisitionItems => Set<PurchaseRequisitionItem>();
+        public DbSet<PurchaseRequisitionAttachment> PurchaseRequisitionAttachments => Set<PurchaseRequisitionAttachment>();
+        public DbSet<PurchaseRequisitionApproval> PurchaseRequisitionApprovals => Set<PurchaseRequisitionApproval>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -48,6 +52,32 @@ namespace ProcurePro.Api.Data
             builder.Entity<BidItem>().HasOne(i => i.Bid)
                 .WithMany(b => b.Items)
                 .HasForeignKey(i => i.BidId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PurchaseRequisition>()
+                .HasIndex(pr => pr.PrNumber)
+                .IsUnique();
+
+            builder.Entity<PurchaseRequisitionItem>()
+                .Property(i => i.EstimatedUnitCost)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<PurchaseRequisitionItem>()
+                .HasOne(i => i.PurchaseRequisition)
+                .WithMany(pr => pr.Items)
+                .HasForeignKey(i => i.PurchaseRequisitionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PurchaseRequisitionAttachment>()
+                .HasOne(a => a.PurchaseRequisition)
+                .WithMany(pr => pr.Attachments)
+                .HasForeignKey(a => a.PurchaseRequisitionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PurchaseRequisitionApproval>()
+                .HasOne(a => a.PurchaseRequisition)
+                .WithMany(pr => pr.Approvals)
+                .HasForeignKey(a => a.PurchaseRequisitionId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
