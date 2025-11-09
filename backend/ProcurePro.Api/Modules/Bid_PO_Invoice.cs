@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ProcurePro.Api.Modules
 {
     public enum TenderVisibility { Open, Closed }
@@ -18,6 +20,7 @@ namespace ProcurePro.Api.Modules
     {
         public Guid Id { get; set; }
         public Guid BidId { get; set; }
+        [JsonIgnore]
         public Bid Bid { get; set; } = default!;
         public string Description { get; set; } = default!;
         public int Quantity { get; set; }
@@ -32,5 +35,6 @@ namespace ProcurePro.Api.Modules
         public decimal Amount { get; set; }
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
+        public PurchaseOrder PurchaseOrder { get; set; } = default!;
     }
 }

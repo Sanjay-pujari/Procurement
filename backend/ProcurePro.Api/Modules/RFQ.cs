@@ -29,6 +29,8 @@ namespace ProcurePro.Api.Modules
         public List<RFQItem> Items { get; set; } = new();
         public List<RFQVendor> RFQVendors { get; set; } = new();
         public List<RFQAttachment> Attachments { get; set; } = new();
+        public List<RFP> RFPs { get; set; } = new();
+        public List<RFI> RFIs { get; set; } = new();
     }
 
     public class RFQItem

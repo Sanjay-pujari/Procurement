@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProcurePro.Api.Data;
 using ProcurePro.Api.Modules;
 using ProcurePro.Api.Services;
+using System.Security.Claims;
 
 namespace ProcurePro.Api.Controllers
 {
@@ -22,13 +23,24 @@ namespace ProcurePro.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,ProcurementManager,Approver")]
+        [Authorize(Roles = "Admin,ProcurementManager,Approver,Vendor")]
         public async Task<ActionResult<IEnumerable<Bid>>> GetAll()
         {
-            var bids = await _context.Bids
+            var query = _context.Bids
                 .Include(b => b.Items)
                 .OrderByDescending(b => b.SubmittedAt)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (User.IsInRole("Vendor"))
+            	{
+            	    var vendorId = await GetCurrentVendorIdAsync();
+            	    if (vendorId == null)
+            	        return Forbid();
+            	
+            	    query = query.Where(b => b.VendorId == vendorId.Value);
+            	}
+
+            var bids = await query.ToListAsync();
             return Ok(bids);
         }
 
@@ -40,18 +52,37 @@ namespace ProcurePro.Api.Controllers
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (bid == null) return NotFound();
+
+            if (User.IsInRole("Vendor"))
+            {
+                var vendorId = await GetCurrentVendorIdAsync();
+                if (vendorId == null || bid.VendorId != vendorId.Value)
+                    return NotFound();
+            }
+
             return Ok(bid);
         }
 
         [HttpGet("by-rfq/{rfqId}")]
-        [Authorize(Roles = "Admin,ProcurementManager,Approver")]
+        [Authorize(Roles = "Admin,ProcurementManager,Approver,Vendor")]
         public async Task<ActionResult<IEnumerable<Bid>>> GetByRFQ(Guid rfqId)
         {
-            var bids = await _context.Bids
+            var query = _context.Bids
                 .Include(b => b.Items)
                 .Where(b => b.RFQId == rfqId)
                 .OrderByDescending(b => b.Score)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (User.IsInRole("Vendor"))
+            {
+                var vendorId = await GetCurrentVendorIdAsync();
+                if (vendorId == null)
+                    return Forbid();
+
+                query = query.Where(b => b.VendorId == vendorId.Value);
+            }
+
+            var bids = await query.ToListAsync();
             return Ok(bids);
         }
 
@@ -59,7 +90,12 @@ namespace ProcurePro.Api.Controllers
         [Authorize(Roles = "Vendor")]
         public async Task<ActionResult<Bid>> Create(Bid bid)
         {
+            var vendorId = await GetCurrentVendorIdAsync();
+            if (vendorId == null)
+                return Forbid();
+
             bid.Id = Guid.NewGuid();
+            bid.VendorId = vendorId.Value;
             bid.SubmittedAt = DateTime.UtcNow;
 
             foreach (var item in bid.Items)
@@ -68,10 +104,7 @@ namespace ProcurePro.Api.Controllers
                 item.BidId = bid.Id;
             }
 
-            // Calculate total amount
             bid.TotalAmount = bid.Items.Sum(i => i.Quantity * i.UnitPrice);
-
-            // Calculate score
             bid.Score = _scoringService.ComputeScore(bid);
 
             _context.Bids.Add(bid);
@@ -91,11 +124,16 @@ namespace ProcurePro.Api.Controllers
 
             if (existing == null) return NotFound();
 
+            var vendorId = await GetCurrentVendorIdAsync();
+            if (vendorId == null || existing.VendorId != vendorId.Value)
+                return NotFound();
+
             existing.Visibility = bid.Visibility;
             existing.TotalAmount = bid.Items.Sum(i => i.Quantity * i.UnitPrice);
 
-            // Update items
             _context.BidItems.RemoveRange(existing.Items);
+            existing.Items.Clear();
+
             foreach (var item in bid.Items)
             {
                 item.Id = Guid.NewGuid();
@@ -103,7 +141,6 @@ namespace ProcurePro.Api.Controllers
                 existing.Items.Add(item);
             }
 
-            // Recalculate score
             existing.Score = _scoringService.ComputeScore(existing);
 
             await _context.SaveChangesAsync();
@@ -116,6 +153,13 @@ namespace ProcurePro.Api.Controllers
         {
             var bid = await _context.Bids.FindAsync(id);
             if (bid == null) return NotFound();
+
+            if (User.IsInRole("Vendor"))
+            {
+                var vendorId = await GetCurrentVendorIdAsync();
+                if (vendorId == null || bid.VendorId != vendorId.Value)
+                    return NotFound();
+            }
 
             _context.Bids.Remove(bid);
             await _context.SaveChangesAsync();
@@ -135,6 +179,18 @@ namespace ProcurePro.Api.Controllers
             bid.Score = _scoringService.ComputeScore(bid);
             await _context.SaveChangesAsync();
             return Ok(bid.Score);
+        }
+
+        private async Task<Guid?> GetCurrentVendorIdAsync()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return null;
+
+            return await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.VendorId)
+                .FirstOrDefaultAsync();
         }
     }
 }

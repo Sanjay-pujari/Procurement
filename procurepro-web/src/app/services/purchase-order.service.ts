@@ -34,6 +34,15 @@ export interface IssuePurchaseOrderRequest {
   amendmentsJson?: string;
 }
 
+export interface PurchaseOrderIssueCandidate {
+  vendorQuotationId: string;
+  vendorName: string;
+  rfqReference?: string;
+  totalAmount: number;
+  currency: string;
+  submittedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PurchaseOrderService {
   private apiUrl = `${environment.apiBase}/PurchaseOrder`;
@@ -46,6 +55,10 @@ export class PurchaseOrderService {
 
   getById(id: string): Observable<PurchaseOrderDetail> {
     return this.http.get<PurchaseOrderDetail>(`${this.apiUrl}/${id}`);
+  }
+
+  getIssueCandidates(): Observable<PurchaseOrderIssueCandidate[]> {
+    return this.http.get<PurchaseOrderIssueCandidate[]>(`${this.apiUrl}/ready-to-issue`);
   }
 
   issue(request: IssuePurchaseOrderRequest): Observable<PurchaseOrderDetail> {

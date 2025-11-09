@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace ProcurePro.Api.Modules
 {
     public class RFP
@@ -7,6 +9,8 @@ namespace ProcurePro.Api.Modules
         public string Title { get; set; } = default!;
         public string? Requirements { get; set; }
         public string? EvaluationCriteria { get; set; }
+        public RFQ RFQ { get; set; } = default!;
+        public List<RFI> RFIs { get; set; } = new();
     }
 
     public class RFI
@@ -16,5 +20,7 @@ namespace ProcurePro.Api.Modules
         public Guid? RFPId { get; set; }
         public string Title { get; set; } = default!;
         public string? QuestionnaireJson { get; set; }
+        public RFQ? RFQ { get; set; }
+        public RFP? RFP { get; set; }
     }
 }

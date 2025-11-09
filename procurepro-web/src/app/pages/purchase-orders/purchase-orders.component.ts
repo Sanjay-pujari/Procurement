@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PurchaseOrderService, PurchaseOrderSummary, PurchaseOrderDetail, IssuePurchaseOrderRequest } from '../../services/purchase-order.service';
+import { PurchaseOrderService, PurchaseOrderSummary, PurchaseOrderDetail, IssuePurchaseOrderRequest, PurchaseOrderIssueCandidate } from '../../services/purchase-order.service';
 
 @Component({
   selector: 'app-purchase-orders',
@@ -98,8 +98,36 @@ import { PurchaseOrderService, PurchaseOrderSummary, PurchaseOrderDetail, IssueP
           </div>
           <div class="modal-body">
             <div class="form-group">
-              <label>Vendor Quotation ID</label>
-              <input type="text" [(ngModel)]="issueRequest.vendorQuotationId" class="form-control" placeholder="Quotation GUID" />
+              <label>Select Vendor Quotation</label>
+              <div class="select-row">
+                <select [(ngModel)]="selectedCandidateId" (ngModelChange)="onCandidateSelected(selectedCandidateId)" class="form-control">
+                  <option value="">-- Select quotation --</option>
+                  <option *ngFor="let candidate of issueCandidates" [value]="candidate.vendorQuotationId">
+                    {{ candidate.vendorName }} · {{ candidate.rfqReference || 'RFQ' }} · {{ candidate.totalAmount | currency:candidate.currency }}
+                  </option>
+                </select>
+                <button type="button" class="btn btn-link" (click)="refreshIssueCandidates()" [disabled]="issueCandidatesLoading">
+                  {{ issueCandidatesLoading ? 'Refreshing…' : 'Refresh' }}
+                </button>
+              </div>
+              <div class="helper" *ngIf="issueCandidatesLoading">Loading quotations…</div>
+              <div class="helper error" *ngIf="issueCandidateError">{{ issueCandidateError }}</div>
+              <div class="helper" *ngIf="!issueCandidatesLoading && !issueCandidateError && issueCandidates.length === 0">
+                No eligible quotations found. You can paste an ID below.
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Or enter quotation ID manually</label>
+              <input type="text" [(ngModel)]="issueRequest.vendorQuotationId" (ngModelChange)="onManualIdChange($event)" class="form-control" placeholder="Quotation GUID" />
+            </div>
+            <div class="summary" *ngIf="selectedCandidate">
+              <h3>Selected Quotation</h3>
+              <ul>
+                <li><strong>Vendor:</strong> {{ selectedCandidate.vendorName }}</li>
+                <li><strong>Reference:</strong> {{ selectedCandidate.rfqReference || '—' }}</li>
+                <li><strong>Total:</strong> {{ selectedCandidate.totalAmount | currency:selectedCandidate.currency }}</li>
+                <li><strong>Submitted:</strong> {{ selectedCandidate.submittedAt | date:'medium' }}</li>
+              </ul>
             </div>
             <div class="form-group">
               <label>Amendments (JSON)</label>
@@ -159,6 +187,13 @@ import { PurchaseOrderService, PurchaseOrderSummary, PurchaseOrderDetail, IssueP
     .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
     .form-control { width: 100%; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #d1d5db; font-size: 1rem; }
     textarea.form-control { resize: vertical; min-height: 120px; font-family: monospace; }
+    .select-row { display: flex; gap: 0.5rem; align-items: center; }
+    .select-row .form-control { flex: 1; }
+    .helper { margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280; }
+    .helper.error { color: #b91c1c; }
+    .summary { background: #f3f4f6; border-radius: 8px; padding: 1rem; }
+    .summary h3 { margin: 0 0 0.75rem; font-size: 1rem; }
+    .summary ul { margin: 0; padding-left: 1rem; display: grid; gap: 0.25rem; }
   `]
 })
 export class PurchaseOrdersComponent implements OnInit {
@@ -167,6 +202,10 @@ export class PurchaseOrdersComponent implements OnInit {
   showModal = false;
   isIssuing = false;
   issueRequest: IssuePurchaseOrderRequest = { vendorQuotationId: '' };
+  issueCandidates: PurchaseOrderIssueCandidate[] = [];
+  issueCandidatesLoading = false;
+  issueCandidateError: string | null = null;
+  selectedCandidateId: string | null = null;
 
   constructor(private poService: PurchaseOrderService) {}
 
@@ -187,6 +226,13 @@ export class PurchaseOrdersComponent implements OnInit {
       },
       error: (err) => console.error('Error loading purchase orders:', err)
     });
+  }
+
+  get selectedCandidate(): PurchaseOrderIssueCandidate | null {
+    if (!this.selectedCandidateId) {
+      return null;
+    }
+    return this.issueCandidates.find(c => c.vendorQuotationId === this.selectedCandidateId) ?? null;
   }
 
   getStatusLabel(status: number): string {
@@ -216,29 +262,44 @@ export class PurchaseOrdersComponent implements OnInit {
 
   openIssueModal(): void {
     this.issueRequest = { vendorQuotationId: '', amendmentsJson: '' };
+    this.selectedCandidateId = null;
+    this.issueCandidateError = null;
     this.showModal = true;
+    this.refreshIssueCandidates();
   }
 
   closeModal(): void {
     this.showModal = false;
+    this.isIssuing = false;
   }
 
   issuePurchaseOrder(): void {
-    if (!this.issueRequest.vendorQuotationId.trim()) {
+    const quotationId = this.issueRequest.vendorQuotationId.trim();
+    if (!quotationId) {
+      this.issueCandidateError = 'Please select or enter a vendor quotation ID.';
       return;
     }
 
+    this.issueRequest.vendorQuotationId = quotationId;
+    const amendments = this.issueRequest.amendmentsJson?.trim();
+    const payload: IssuePurchaseOrderRequest = {
+      vendorQuotationId: quotationId,
+      amendmentsJson: amendments ? amendments : undefined
+    };
+
     this.isIssuing = true;
-    this.poService.issue(this.issueRequest).subscribe({
+    this.poService.issue(payload).subscribe({
       next: (detail) => {
         this.isIssuing = false;
         this.showModal = false;
         this.selectedPo = detail;
         this.loadPOs();
+        this.refreshIssueCandidates();
       },
       error: (err) => {
         this.isIssuing = false;
         console.error('Error issuing purchase order:', err);
+        this.issueCandidateError = 'Issuing failed. Please verify the quotation and try again.';
       }
     });
   }
@@ -272,6 +333,53 @@ export class PurchaseOrdersComponent implements OnInit {
       next: (detail) => this.selectedPo = detail,
       error: (err) => console.error('Error refreshing detail:', err)
     });
+  }
+
+  refreshIssueCandidates(): void {
+    if (this.issueCandidatesLoading) {
+      return;
+    }
+
+    this.issueCandidateError = null;
+    this.issueCandidatesLoading = true;
+    this.poService.getIssueCandidates().subscribe({
+      next: (data) => {
+        this.issueCandidates = data;
+        this.issueCandidatesLoading = false;
+        const manualId = this.issueRequest.vendorQuotationId?.trim();
+        if (manualId && data.some(c => c.vendorQuotationId === manualId)) {
+          this.selectedCandidateId = manualId;
+        } else if (this.selectedCandidateId && !data.some(c => c.vendorQuotationId === this.selectedCandidateId)) {
+          this.selectedCandidateId = null;
+        }
+        if (!this.selectedCandidateId && !manualId && data.length === 1) {
+          this.selectedCandidateId = data[0].vendorQuotationId;
+          this.issueRequest.vendorQuotationId = data[0].vendorQuotationId;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading issue candidates:', err);
+        this.issueCandidatesLoading = false;
+        this.issueCandidateError = 'Unable to load quotations. You can still paste an ID manually.';
+      }
+    });
+  }
+
+  onCandidateSelected(candidateId: string | null): void {
+    this.issueCandidateError = null;
+    this.selectedCandidateId = candidateId && candidateId.length ? candidateId : null;
+    if (this.selectedCandidateId) {
+      this.issueRequest.vendorQuotationId = this.selectedCandidateId;
+    } else if (!this.issueRequest.vendorQuotationId) {
+      this.issueRequest.vendorQuotationId = '';
+    }
+  }
+
+  onManualIdChange(value: string): void {
+    const normalized = (value ?? '').trim();
+    const match = this.issueCandidates.find(c => c.vendorQuotationId === normalized);
+    this.selectedCandidateId = match ? match.vendorQuotationId : null;
+    this.issueCandidateError = null;
   }
 }
 

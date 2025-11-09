@@ -95,6 +95,38 @@ namespace ProcurePro.Api.Data
                 .HasForeignKey(a => a.VendorQuotationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<RFP>()
+                .HasOne(r => r.RFQ)
+                .WithMany(rfq => rfq.RFPs)
+                .HasForeignKey(r => r.RFQId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<RFP>()
+                .Property(r => r.Title)
+                .IsRequired();
+
+            builder.Entity<RFI>()
+                .HasOne(r => r.RFQ)
+                .WithMany(rfq => rfq.RFIs)
+                .HasForeignKey(r => r.RFQId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<RFI>()
+                .HasOne(r => r.RFP)
+                .WithMany(rfp => rfp.RFIs)
+                .HasForeignKey(r => r.RFPId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Invoice>()
+                .Property(i => i.Amount)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<Invoice>()
+                .HasOne(i => i.PurchaseOrder)
+                .WithMany()
+                .HasForeignKey(i => i.PurchaseOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Entity<VendorQuotation>()
                 .Property(q => q.Subtotal)
                 .HasColumnType("decimal(18,2)");

@@ -41,6 +41,28 @@ namespace ProcurePro.Api.Controllers
             return Ok(purchaseOrders);
         }
 
+        [HttpGet("ready-to-issue")]
+        [Authorize(Roles = "Admin,ProcurementManager")]
+        public async Task<ActionResult<IEnumerable<PurchaseOrderIssueOptionDto>>> GetReadyToIssue()
+        {
+            var options = await _context.VendorQuotations
+                .AsNoTracking()
+                .Include(q => q.Vendor)
+                .Include(q => q.RFQ)
+                .Where(q => !_context.PurchaseOrders.Any(po => po.VendorQuotationId == q.Id))
+                .OrderByDescending(q => q.SubmittedAt)
+                .Select(q => new PurchaseOrderIssueOptionDto(
+                    q.Id,
+                    string.IsNullOrWhiteSpace(q.Vendor.CompanyName) ? q.Vendor.Email : q.Vendor.CompanyName!,
+                    string.IsNullOrWhiteSpace(q.RFQ.ReferenceNumber) ? q.RFQ.Title : q.RFQ.ReferenceNumber!,
+                    q.TotalAmount,
+                    q.Currency,
+                    q.SubmittedAt))
+                .ToListAsync();
+
+            return Ok(options);
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<PurchaseOrderDetailDto>> Get(Guid id)
         {

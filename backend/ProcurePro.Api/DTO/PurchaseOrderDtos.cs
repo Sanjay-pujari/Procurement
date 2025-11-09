@@ -35,6 +35,14 @@ namespace ProcurePro.Api.DTO
         IReadOnlyCollection<PurchaseOrderItemDto> Items,
         string? AmendmentsJson);
 
+    public record PurchaseOrderIssueOptionDto(
+        Guid VendorQuotationId,
+        string VendorName,
+        string? RfqReference,
+        decimal TotalAmount,
+        string Currency,
+        DateTime SubmittedAt);
+
     public record IssuePurchaseOrderRequest(Guid VendorQuotationId, string? AmendmentsJson);
 }
 

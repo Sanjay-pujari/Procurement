@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService, LoginResponse } from '../../services/auth.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-login',
-    imports: [FormsModule, CommonModule],
+    imports: [FormsModule, CommonModule, RouterLink],
     template: `
   <div class="login">
     <h2>ProcurePro Login</h2>
@@ -22,6 +23,9 @@ import { AuthService, LoginResponse } from '../../services/auth.service';
     <p *ngIf="infoMessage" class="info">{{ infoMessage }}</p>
     <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
     <p class="hint">Default admin: admin@procurepro.local / Admin#12345</p>
+    <p class="links">
+      <a routerLink="/vendor-signup">Need a vendor account? Sign up here</a>
+    </p>
   </div>
   `,
     styles: [`
@@ -34,6 +38,8 @@ import { AuthService, LoginResponse } from '../../services/auth.service';
     .two-factor{display:flex;flex-direction:column;gap:8px}
     .info{color:#047857}
     .error{color:#b91c1c}
+    .links{margin-top:0.5rem;font-size:0.9rem}
+    .links a{color:#2563eb}
     `]
 })
 export class LoginComponent {

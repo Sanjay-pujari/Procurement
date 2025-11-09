@@ -4,6 +4,7 @@ import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
+  { path: 'vendor-signup', loadComponent: () => import('./pages/vendor-signup/vendor-signup.component').then(m => m.VendorSignupComponent) },
   { path: '', canActivate: [authGuard], loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: 'vendors', canActivate: [authGuard, roleGuard('ProcurementManager')], loadComponent: () => import('./pages/vendors/vendors.component').then(m => m.VendorsComponent) },
   { path: 'rfq', canActivate: [authGuard, roleGuard('ProcurementManager')], loadComponent: () => import('./pages/rfq/rfq.component').then(m => m.RFQComponent) },
