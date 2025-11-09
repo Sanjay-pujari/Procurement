@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using ProcurePro.Api.Data;
 using ProcurePro.Api.DTO;
 using ProcurePro.Api.Modules;
+using ProcurePro.Api.Services;
+using Microsoft.AspNetCore.Identity;
+using ProcurePro.Api.Models;
 using System.Linq;
 
 namespace ProcurePro.Api.Controllers
@@ -14,10 +17,14 @@ namespace ProcurePro.Api.Controllers
     public class PurchaseOrderController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notifications;
+        private readonly UserManager<ApplicationUser> _users;
 
-        public PurchaseOrderController(ApplicationDbContext context)
+        public PurchaseOrderController(ApplicationDbContext context, INotificationService notifications, UserManager<ApplicationUser> users)
         {
             _context = context;
+            _notifications = notifications;
+            _users = users;
         }
 
         [HttpGet]
@@ -83,6 +90,8 @@ namespace ProcurePro.Api.Controllers
         {
             var quotation = await _context.VendorQuotations
                 .Include(q => q.Items)
+                .Include(q => q.Vendor)
+                .Include(q => q.RFQ)
                 .FirstOrDefaultAsync(q => q.Id == request.VendorQuotationId);
 
             if (quotation == null)
@@ -108,6 +117,8 @@ namespace ProcurePro.Api.Controllers
             _context.PurchaseOrders.Add(po);
             await _context.SaveChangesAsync();
 
+            await NotifyVendorOfNewPoAsync(po, quotation);
+
             return CreatedAtAction(nameof(Get), new { id = po.Id }, MapDetail(po, quotation));
         }
 
@@ -122,6 +133,8 @@ namespace ProcurePro.Api.Controllers
             po.AcknowledgedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
+            await NotifyProcurementManagersAsync("Purchase order acknowledged", $"PO {po.PurchaseOrderNumber} has been acknowledged by the vendor.");
+
             return NoContent();
         }
 
@@ -135,6 +148,8 @@ namespace ProcurePro.Api.Controllers
             po.Status = PurchaseOrderStatus.Completed;
             po.CompletedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
+            await NotifyVendorStatusChangeAsync(po, "Purchase order completed", $"PO {po.PurchaseOrderNumber} has been marked as completed.");
 
             return NoContent();
         }
@@ -174,6 +189,52 @@ namespace ProcurePro.Api.Controllers
                     i.LineTotal,
                     i.Notes)).ToList(),
                 po.AmendmentsJson);
+        }
+
+        private async Task NotifyVendorOfNewPoAsync(PurchaseOrder po, VendorQuotation quotation)
+        {
+            var subject = $"Purchase order {po.PurchaseOrderNumber} issued";
+            var rfqRef = quotation.RFQ?.ReferenceNumber ?? quotation.RFQ?.Title ?? "RFQ";
+            var message = $"A new purchase order ({po.PurchaseOrderNumber}) has been issued for {rfqRef}. Total value: {quotation.TotalAmount:C}. Please acknowledge at your earliest convenience.";
+
+            if (quotation.Vendor != null && !string.IsNullOrWhiteSpace(quotation.Vendor.Email))
+            {
+                await _notifications.SendEmailAsync(quotation.Vendor.Email, subject, message);
+            }
+
+            var vendorUsers = await _users.Users.Where(u => u.VendorId == po.VendorId).ToListAsync();
+            foreach (var user in vendorUsers)
+            {
+                await _notifications.SendWebNotificationAsync(user.Id, subject, message);
+            }
+        }
+
+        private async Task NotifyVendorStatusChangeAsync(PurchaseOrder po, string subject, string message)
+        {
+            var vendor = await _context.Vendors.AsNoTracking().FirstOrDefaultAsync(v => v.Id == po.VendorId);
+            if (vendor != null && !string.IsNullOrWhiteSpace(vendor.Email))
+            {
+                await _notifications.SendEmailAsync(vendor.Email, subject, message);
+            }
+
+            var vendorUsers = await _users.Users.Where(u => u.VendorId == po.VendorId).ToListAsync();
+            foreach (var user in vendorUsers)
+            {
+                await _notifications.SendWebNotificationAsync(user.Id, subject, message);
+            }
+        }
+
+        private async Task NotifyProcurementManagersAsync(string title, string message)
+        {
+            var managers = await _users.GetUsersInRoleAsync("ProcurementManager");
+            foreach (var manager in managers)
+            {
+                if (!string.IsNullOrWhiteSpace(manager.Email))
+                {
+                    await _notifications.SendEmailAsync(manager.Email, title, message);
+                }
+                await _notifications.SendWebNotificationAsync(manager.Id, title, message);
+            }
         }
     }
 }

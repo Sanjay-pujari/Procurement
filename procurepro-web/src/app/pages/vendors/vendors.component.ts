@@ -36,7 +36,11 @@ import {
                 <small>{{ vendor.email }}</small>
               </td>
               <td>
-                <span class="chip" [class.active]="vendor.isActive" [class.pending]="vendor.verificationStatus === verificationStatus.PendingReview">
+                <span class="chip"
+                      [class.active]="vendor.isActive"
+                      [class.pending]="vendor.verificationStatus === verificationStatus.PendingReview"
+                      [class.suspended]="vendor.verificationStatus === verificationStatus.Suspended"
+                      [class.blacklisted]="vendor.verificationStatus === verificationStatus.Blacklisted">
                   {{ statusLabel(vendor.verificationStatus) }}
                 </span>
               </td>
@@ -60,7 +64,11 @@ import {
       <div class="quick-stats">
         <div>
           <h4>Status</h4>
-          <span class="chip" [class.active]="selectedVendor.vendor.isActive">
+          <span class="chip"
+                [class.active]="selectedVendor.vendor.isActive"
+                [class.pending]="selectedVendor.vendor.verificationStatus === verificationStatus.PendingReview"
+                [class.suspended]="selectedVendor.vendor.verificationStatus === verificationStatus.Suspended"
+                [class.blacklisted]="selectedVendor.vendor.verificationStatus === verificationStatus.Blacklisted">
             {{ statusLabel(selectedVendor.vendor.verificationStatus) }}
           </span>
         </div>
@@ -186,9 +194,11 @@ import {
     tbody tr:hover { background: #f8fafc; }
     tbody tr.selected { background: #e0f2fe; }
     .title { font-weight: 600; }
-    .chip { display:inline-block; padding:0.35rem 0.75rem; border-radius:999px; font-size:0.75rem; background:#f5f5f5; color:#374151; text-transform:capitalize; }
+    .chip { display:inline-block; padding:0.35rem 0.75rem; border-radius:999px; font-size:0.75rem; background:#f5f5f5; color:#374151; text-transform:capitalize; font-weight:600; letter-spacing:0.02em; }
     .chip.active { background:#dcfce7; color:#166534; }
     .chip.pending { background:#fef3c7; color:#92400e; }
+    .chip.suspended { background:#fee2e2; color:#b91c1c; }
+    .chip.blacklisted { background:#1f2937; color:#f9fafb; }
     .empty { text-align:center; padding:1rem; color:#9ca3af; }
     .detail .quick-stats { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:1rem; margin-bottom:2rem; }
     .quick-stats div { background:#f9fafb; border-radius:12px; padding:1rem; }

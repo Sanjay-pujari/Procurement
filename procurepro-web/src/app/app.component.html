@@ -5,29 +5,46 @@
     </div>
     <div class="nav-links">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
-        <span>📊</span> Dashboard
+        <span class="icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a routerLink="/notifications" routerLinkActive="active" class="nav-link">
+        <span class="icon">🔔</span>
+        <span class="nav-label">Notifications</span>
+        <span class="badge" *ngIf="notificationsCount > 0">{{ notificationsCount }}</span>
+      </a>
+      <a routerLink="/reports" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('ProcurementManager') || auth.hasRole('Admin')">
+        <span class="icon">📈</span>
+        <span class="nav-label">Reports</span>
       </a>
       <a routerLink="/rfq" routerLinkActive="active" class="nav-link">
-        <span>📋</span> RFQs
+        <span class="icon">📋</span>
+        <span class="nav-label">RFQs</span>
       </a>
       <a routerLink="/bids" routerLinkActive="active" class="nav-link">
-        <span>💼</span> Bids
+        <span class="icon">💼</span>
+        <span class="nav-label">Bids</span>
       </a>
       <a routerLink="/purchase-orders" routerLinkActive="active" class="nav-link">
-        <span>📄</span> Purchase Orders
+        <span class="icon">📄</span>
+        <span class="nav-label">Purchase Orders</span>
       </a>
       <a routerLink="/invoices" routerLinkActive="active" class="nav-link">
-        <span>💰</span> Invoices
+        <span class="icon">💰</span>
+        <span class="nav-label">Invoices</span>
       </a>
       <a routerLink="/vendors" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('ProcurementManager') || auth.hasRole('Admin')">
-        <span>🏢</span> Vendors
+        <span class="icon">🏢</span>
+        <span class="nav-label">Vendors</span>
       </a>
       <div class="nav-divider" *ngIf="auth.hasRole('Admin')"></div>
       <a routerLink="/users" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('Admin')">
-        <span>👥</span> Users
+        <span class="icon">👥</span>
+        <span class="nav-label">Users</span>
       </a>
       <a routerLink="/roles" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('Admin')">
-        <span>🔐</span> Roles
+        <span class="icon">🔐</span>
+        <span class="nav-label">Roles</span>
       </a>
     </div>
     <div class="user-section">

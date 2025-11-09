@@ -43,6 +43,23 @@
   border-left: 3px solid transparent;
 }
 
+.nav-link .icon {
+  font-size: 1.25rem;
+}
+
+.nav-link .nav-label {
+  flex: 1;
+}
+
+.nav-link .badge {
+  background: rgba(248, 113, 113, 0.95);
+  color: white;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
@@ -52,10 +69,6 @@
   background: rgba(255, 255, 255, 0.15);
   color: white;
   border-left-color: white;
-}
-
-.nav-link span {
-  font-size: 1.25rem;
 }
 
 .nav-divider {

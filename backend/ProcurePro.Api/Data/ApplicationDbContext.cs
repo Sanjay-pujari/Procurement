@@ -31,6 +31,7 @@ namespace ProcurePro.Api.Data
         public DbSet<PurchaseRequisitionItem> PurchaseRequisitionItems => Set<PurchaseRequisitionItem>();
         public DbSet<PurchaseRequisitionAttachment> PurchaseRequisitionAttachments => Set<PurchaseRequisitionAttachment>();
         public DbSet<PurchaseRequisitionApproval> PurchaseRequisitionApprovals => Set<PurchaseRequisitionApproval>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -194,6 +195,18 @@ namespace ProcurePro.Api.Data
                 .WithMany(pr => pr.Approvals)
                 .HasForeignKey(a => a.PurchaseRequisitionId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Notification>()
+                .Property(n => n.Channel)
+                .HasMaxLength(50);
+            builder.Entity<Notification>()
+                .Property(n => n.Title)
+                .HasMaxLength(250);
+            builder.Entity<Notification>()
+                .Property(n => n.Recipient)
+                .HasMaxLength(250);
+            builder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.Channel, n.CreatedAt });
         }
     }
 }

@@ -143,6 +143,7 @@ namespace ProcurePro.Api.Controllers
             await AddStatusHistoryAsync(vendor.Id, VendorVerificationStatus.PendingReview, "KYC documents submitted by vendor.", userId);
             await _db.SaveChangesAsync();
 
+            await NotifyProcurementManagersAsync("Vendor KYC submitted", $"{vendor.CompanyName} submitted new KYC details and awaits review.");
             return NoContent();
         }
 
@@ -165,14 +166,11 @@ namespace ProcurePro.Api.Controllers
             await AddStatusHistoryAsync(vendor.Id, request.Status, request.Remarks, vendor.VerifiedByUserId);
             await _db.SaveChangesAsync();
 
-            if (!string.IsNullOrWhiteSpace(vendor.Email))
-            {
-                var subject = request.Status == VendorVerificationStatus.Approved ? "Vendor profile approved" : "Vendor profile rejected";
-                var message = request.Status == VendorVerificationStatus.Approved
-                    ? "Your vendor profile has been approved. You may now participate in procurement activities."
-                    : $"Your vendor profile has been rejected. Remarks: {request.Remarks}";
-                await _notify.SendEmailAsync(vendor.Email, subject, message);
-            }
+            var subject = request.Status == VendorVerificationStatus.Approved ? "Vendor profile approved" : "Vendor profile rejected";
+            var message = request.Status == VendorVerificationStatus.Approved
+                ? "Your vendor profile has been approved. You may now participate in procurement activities."
+                : $"Your vendor profile has been rejected. Remarks: {request.Remarks}";
+            await NotifyVendorAsync(vendor, subject, message);
 
             return NoContent();
         }
@@ -190,6 +188,7 @@ namespace ProcurePro.Api.Controllers
             await AddStatusHistoryAsync(id, VendorVerificationStatus.Suspended, request.Remarks, User.FindFirstValue(ClaimTypes.NameIdentifier));
             await _db.SaveChangesAsync();
 
+            await NotifyVendorAsync(vendor, "Vendor account suspended", $"Your vendor profile has been suspended. Remarks: {request.Remarks}");
             return NoContent();
         }
 
@@ -206,6 +205,7 @@ namespace ProcurePro.Api.Controllers
             await AddStatusHistoryAsync(id, VendorVerificationStatus.Blacklisted, request.Remarks, User.FindFirstValue(ClaimTypes.NameIdentifier));
             await _db.SaveChangesAsync();
 
+            await NotifyVendorAsync(vendor, "Vendor account blacklisted", $"Your vendor profile has been blacklisted. Remarks: {request.Remarks}");
             return NoContent();
         }
 
@@ -225,6 +225,7 @@ namespace ProcurePro.Api.Controllers
             await AddStatusHistoryAsync(id, VendorVerificationStatus.Approved, request.Remarks, vendor.VerifiedByUserId);
             await _db.SaveChangesAsync();
 
+            await NotifyVendorAsync(vendor, "Vendor account reinstated", $"Your vendor profile has been reinstated. Remarks: {request.Remarks}");
             return NoContent();
         }
 
@@ -240,6 +241,33 @@ namespace ProcurePro.Api.Controllers
                 ChangedAt = DateTime.UtcNow
             });
             return Task.CompletedTask;
+        }
+
+        private async Task NotifyVendorAsync(Vendor vendor, string subject, string message)
+        {
+            if (!string.IsNullOrWhiteSpace(vendor.Email))
+            {
+                await _notify.SendEmailAsync(vendor.Email, subject, message);
+            }
+
+            var vendorUsers = await _users.Users.Where(u => u.VendorId == vendor.Id).ToListAsync();
+            foreach (var user in vendorUsers)
+            {
+                await _notify.SendWebNotificationAsync(user.Id, subject, message);
+            }
+        }
+
+        private async Task NotifyProcurementManagersAsync(string title, string message)
+        {
+            var managers = await _users.GetUsersInRoleAsync("ProcurementManager");
+            foreach (var manager in managers)
+            {
+                if (!string.IsNullOrWhiteSpace(manager.Email))
+                {
+                    await _notify.SendEmailAsync(manager.Email, title, message);
+                }
+                await _notify.SendWebNotificationAsync(manager.Id, title, message);
+            }
         }
     }
 }

@@ -347,6 +347,11 @@ namespace ProcurePro.Api.Controllers
                 .Where(v => targetVendorIds.Contains(v.Id))
                 .ToListAsync();
 
+            var vendorUsers = await _context.Users
+                .Where(u => u.VendorId != null && targetVendorIds.Contains(u.VendorId.Value))
+                .GroupBy(u => u.VendorId!.Value)
+                .ToDictionaryAsync(g => g.Key, g => g.Select(u => u).ToList());
+
             foreach (var invitation in rfq.RFQVendors.Where(v => targetVendorIds.Contains(v.VendorId)))
             {
                 invitation.Status = RfqVendorStatus.InvitationSent;
@@ -355,12 +360,23 @@ namespace ProcurePro.Api.Controllers
 
             foreach (var vendor in vendors)
             {
+                var subject = $"RFQ Invitation: {rfq.ReferenceNumber}";
+                var body = $"You have been invited to submit a quotation for '{rfq.Title}'. Please log in to review details and acknowledge.";
+
                 if (!string.IsNullOrWhiteSpace(vendor.Email))
                 {
                     await _notification.SendEmailAsync(
                         vendor.Email,
-                        $"RFQ Invitation: {rfq.ReferenceNumber}",
-                        $"You have been invited to submit a quotation for '{rfq.Title}'. Please log in to review details and acknowledge.");
+                        subject,
+                        body);
+                }
+
+                if (vendorUsers.TryGetValue(vendor.Id, out var users))
+                {
+                    foreach (var user in users)
+                    {
+                        await _notification.SendWebNotificationAsync(user.Id, subject, body);
+                    }
                 }
             }
         }

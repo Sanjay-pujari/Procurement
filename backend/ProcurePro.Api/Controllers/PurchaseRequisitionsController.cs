@@ -208,7 +208,7 @@ namespace ProcurePro.Api.Controllers
 
             await _db.SaveChangesAsync();
 
-            await NotifyApproverAsync(firstApproval.ApproverUserId, $"PR {pr.PrNumber} requires your approval.");
+            await NotifyApproverAsync(firstApproval.ApproverUserId, pr.PrNumber, $"PR {pr.PrNumber} requires your approval.");
 
             return NoContent();
         }
@@ -244,7 +244,7 @@ namespace ProcurePro.Api.Controllers
             {
                 nextApproval.Status = PurchaseRequisitionApprovalStatus.Pending;
                 await _db.SaveChangesAsync();
-                await NotifyApproverAsync(nextApproval.ApproverUserId, $"PR {pr.PrNumber} is ready for your approval.");
+                await NotifyApproverAsync(nextApproval.ApproverUserId, pr.PrNumber, $"PR {pr.PrNumber} is ready for your approval.");
                 return NoContent();
             }
             else
@@ -254,6 +254,7 @@ namespace ProcurePro.Api.Controllers
             }
 
             await _db.SaveChangesAsync();
+            await NotifyRequesterAsync(pr, "Purchase requisition approved", $"PR {pr.PrNumber} has been fully approved.");
             return NoContent();
         }
 
@@ -282,16 +283,38 @@ namespace ProcurePro.Api.Controllers
             pr.Status = PurchaseRequisitionStatus.Rejected;
 
             await _db.SaveChangesAsync();
+            await NotifyRequesterAsync(pr, "Purchase requisition rejected", $"PR {pr.PrNumber} was rejected. {request?.Comments}".Trim());
             return NoContent();
         }
 
-        private async Task NotifyApproverAsync(string approverUserId, string message)
+        private async Task NotifyApproverAsync(string approverUserId, string prNumber, string message)
         {
             var approver = await _users.FindByIdAsync(approverUserId);
-            if (approver?.Email != null)
+            if (approver == null) return;
+
+            const string subject = "Purchase Requisition Approval Needed";
+            if (!string.IsNullOrEmpty(approver.Email))
             {
-                await _notification.SendEmailAsync(approver.Email, "Purchase Requisition Approval Needed", message);
+                await _notification.SendEmailAsync(approver.Email, subject, message);
             }
+
+            await _notification.SendWebNotificationAsync(approver.Id, subject, message);
+        }
+
+        private async Task NotifyRequesterAsync(PurchaseRequisition pr, string title, string message)
+        {
+            if (string.IsNullOrWhiteSpace(pr.RequestedByUserId))
+                return;
+
+            var requester = await _users.FindByIdAsync(pr.RequestedByUserId);
+            if (requester == null) return;
+
+            if (!string.IsNullOrEmpty(requester.Email))
+            {
+                await _notification.SendEmailAsync(requester.Email, title, message);
+            }
+
+            await _notification.SendWebNotificationAsync(requester.Id, title, message);
         }
 
         private async Task<string> GeneratePrNumberAsync()
