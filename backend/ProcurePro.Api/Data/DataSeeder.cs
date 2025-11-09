@@ -126,52 +126,121 @@ namespace ProcurePro.Api.Data
                 var rfq1 = new RFQ
                 {
                     Id = Guid.NewGuid(),
+                    ReferenceNumber = $"RFQ-{DateTime.UtcNow:yyyyMMddHHmmss}-01",
                     Title = "Office Furniture and Equipment",
                     Terms = "Payment within 30 days. Delivery required within 2 weeks of PO.",
                     DueDate = DateTime.UtcNow.AddDays(15),
                     Status = RFQStatus.Published,
+                    PublishedAt = DateTime.UtcNow.AddDays(-5),
                     Items = new List<RFQItem>
                     {
                         new RFQItem { Id = Guid.NewGuid(), Description = "Executive Office Desk", Specification = "Wood finish, L-shaped, 1.8m x 1.6m", Quantity = 10, Unit = "pieces" },
                         new RFQItem { Id = Guid.NewGuid(), Description = "Ergonomic Office Chair", Specification = "Mesh back, adjustable height, lumbar support", Quantity = 25, Unit = "pieces" },
                         new RFQItem { Id = Guid.NewGuid(), Description = "Filing Cabinet", Specification = "4-drawer, steel, lockable", Quantity = 8, Unit = "pieces" }
                     },
-                    RFQVendors = vendorIds.Take(2).Select(vId => new RFQVendor { Id = Guid.NewGuid(), VendorId = vId }).ToList()
+                    Attachments = new List<RFQAttachment>
+                    {
+                        new RFQAttachment { Id = Guid.NewGuid(), FileName = "FurnitureSpecs.pdf", StorageUrl = "https://storage.local/furniturespecs.pdf", UploadedByUserId = adminEmail }
+                    },
+                    RFQVendors = vendorIds.Take(2).Select(vId => new RFQVendor
+                    {
+                        Id = Guid.NewGuid(),
+                        VendorId = vId,
+                        Status = RfqVendorStatus.InvitationSent,
+                        InvitationSentAt = DateTime.UtcNow.AddDays(-5)
+                    }).ToList()
                 };
 
                 var rfq2 = new RFQ
                 {
                     Id = Guid.NewGuid(),
+                    ReferenceNumber = $"RFQ-{DateTime.UtcNow:yyyyMMddHHmmss}-02",
                     Title = "IT Hardware Procurement",
                     Terms = "1-year warranty required. Payment: 50% advance, 50% on delivery.",
                     DueDate = DateTime.UtcNow.AddDays(20),
                     Status = RFQStatus.Published,
+                    PublishedAt = DateTime.UtcNow.AddDays(-3),
                     Items = new List<RFQItem>
                     {
                         new RFQItem { Id = Guid.NewGuid(), Description = "Desktop Computer", Specification = "Intel i7, 16GB RAM, 512GB SSD, Windows 11 Pro", Quantity = 50, Unit = "units" },
                         new RFQItem { Id = Guid.NewGuid(), Description = "Laptop", Specification = "Intel i5, 8GB RAM, 256GB SSD, 14-inch display", Quantity = 30, Unit = "units" },
                         new RFQItem { Id = Guid.NewGuid(), Description = "Network Switch", Specification = "24-port Gigabit managed switch", Quantity = 5, Unit = "units" }
                     },
-                    RFQVendors = vendorIds.Skip(1).Take(3).Select(vId => new RFQVendor { Id = Guid.NewGuid(), VendorId = vId }).ToList()
+                    RFQVendors = vendorIds.Skip(1).Take(3).Select(vId => new RFQVendor
+                    {
+                        Id = Guid.NewGuid(),
+                        VendorId = vId,
+                        Status = RfqVendorStatus.InvitationSent,
+                        InvitationSentAt = DateTime.UtcNow.AddDays(-3)
+                    }).ToList()
                 };
 
                 var rfq3 = new RFQ
                 {
                     Id = Guid.NewGuid(),
+                    ReferenceNumber = $"RFQ-{DateTime.UtcNow:yyyyMMddHHmmss}-03",
                     Title = "Medical Equipment and Supplies",
                     Terms = "ISO certification required. Delivery in batches over 3 months.",
                     DueDate = DateTime.UtcNow.AddDays(10),
                     Status = RFQStatus.Closed,
+                    PublishedAt = DateTime.UtcNow.AddDays(-10),
+                    ClosedAt = DateTime.UtcNow.AddDays(-2),
                     Items = new List<RFQItem>
                     {
                         new RFQItem { Id = Guid.NewGuid(), Description = "Surgical Gloves", Specification = "Latex-free, sterile, size M/L", Quantity = 10000, Unit = "pairs" },
                         new RFQItem { Id = Guid.NewGuid(), Description = "Face Masks", Specification = "N95, NIOSH certified", Quantity = 5000, Unit = "pieces" },
                         new RFQItem { Id = Guid.NewGuid(), Description = "Digital Thermometer", Specification = "Non-contact, infrared", Quantity = 100, Unit = "units" }
                     },
-                    RFQVendors = vendorIds.Skip(3).Take(2).Select(vId => new RFQVendor { Id = Guid.NewGuid(), VendorId = vId }).ToList()
+                    RFQVendors = vendorIds.Skip(3).Take(2).Select(vId => new RFQVendor
+                    {
+                        Id = Guid.NewGuid(),
+                        VendorId = vId,
+                        Status = RfqVendorStatus.QuoteSubmitted,
+                        InvitationSentAt = DateTime.UtcNow.AddDays(-10),
+                        QuoteSubmittedAt = DateTime.UtcNow.AddDays(-3)
+                    }).ToList()
                 };
 
                 await _context.RFQs.AddRangeAsync(rfq1, rfq2, rfq3);
+                await _context.SaveChangesAsync();
+
+                var sampleQuote = new VendorQuotation
+                {
+                    Id = Guid.NewGuid(),
+                    RFQId = rfq3.Id,
+                    VendorId = vendorIds.Skip(3).First(),
+                    Currency = "USD",
+                    Subtotal = 95000m,
+                    TaxAmount = 4500m,
+                    TotalAmount = 99500m,
+                    ExpectedDeliveryDate = DateTime.UtcNow.AddDays(30),
+                    DeliveryTerms = "Delivery in 4 weeks to main warehouse",
+                    Remarks = "Includes staggered delivery schedule.",
+                    SubmittedAt = DateTime.UtcNow.AddDays(-3),
+                    Items = rfq3.Items.Select(item => new VendorQuotationItem
+                    {
+                        Id = Guid.NewGuid(),
+                        RFQItemId = item.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = 0.0m,
+                        LineTotal = 0.0m
+                    }).ToList()
+                };
+                sampleQuote.Items[0].UnitPrice = 4.5m;
+                sampleQuote.Items[0].LineTotal = sampleQuote.Items[0].UnitPrice * sampleQuote.Items[0].Quantity;
+                sampleQuote.Items[1].UnitPrice = 1.2m;
+                sampleQuote.Items[1].LineTotal = sampleQuote.Items[1].UnitPrice * sampleQuote.Items[1].Quantity;
+                sampleQuote.Items[2].UnitPrice = 150m;
+                sampleQuote.Items[2].LineTotal = sampleQuote.Items[2].UnitPrice * sampleQuote.Items[2].Quantity;
+                sampleQuote.Subtotal = sampleQuote.Items.Sum(i => i.LineTotal);
+                sampleQuote.TotalAmount = sampleQuote.Subtotal + sampleQuote.TaxAmount;
+
+                _context.VendorQuotations.Add(sampleQuote);
+
+                var rfqVendorRecord = await _context.RFQVendors.FirstAsync(rv => rv.RFQId == rfq3.Id && rv.VendorId == sampleQuote.VendorId);
+                rfqVendorRecord.Status = RfqVendorStatus.QuoteSubmitted;
+                rfqVendorRecord.QuoteSubmittedAt = sampleQuote.SubmittedAt;
+
                 await _context.SaveChangesAsync();
 
                 // Seed RFPs

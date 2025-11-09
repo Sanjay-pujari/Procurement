@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProcurePro.Api.Data;
 
@@ -11,9 +12,11 @@ using ProcurePro.Api.Data;
 namespace ProcurePro.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251109163449_VendorQuotationModule")]
+    partial class VendorQuotationModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -867,13 +870,13 @@ namespace ProcurePro.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("RFQItemId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("VendorQuotationId")
                         .HasColumnType("uniqueidentifier");
@@ -1089,7 +1092,7 @@ namespace ProcurePro.Api.Migrations
                     b.HasOne("ProcurePro.Api.Modules.RFQItem", "RFQItem")
                         .WithMany()
                         .HasForeignKey("RFQItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ProcurePro.Api.Modules.VendorQuotation", "VendorQuotation")

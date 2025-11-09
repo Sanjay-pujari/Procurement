@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProcurePro.Api.Data;
 
@@ -11,9 +12,11 @@ using ProcurePro.Api.Data;
 namespace ProcurePro.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251109161837_RfqEnhancements")]
+    partial class RfqEnhancements
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -771,122 +774,6 @@ namespace ProcurePro.Api.Migrations
                     b.ToTable("VendorDocuments");
                 });
 
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AdminNote")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DeliveryTerms")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ExpectedDeliveryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("RFQId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("SubmittedByAdmin")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("TaxAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid>("VendorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RFQId");
-
-                    b.HasIndex("VendorId");
-
-                    b.ToTable("VendorQuotations");
-                });
-
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotationAttachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StorageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UploadedByUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("VendorQuotationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VendorQuotationId");
-
-                    b.ToTable("VendorQuotationAttachments");
-                });
-
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotationItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("LineTotal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<Guid>("RFQItemId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<Guid>("VendorQuotationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RFQItemId");
-
-                    b.HasIndex("VendorQuotationId");
-
-                    b.ToTable("VendorQuotationItems");
-                });
-
             modelBuilder.Entity("ProcurePro.Api.Modules.VendorStatusHistory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1054,55 +941,6 @@ namespace ProcurePro.Api.Migrations
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotation", b =>
-                {
-                    b.HasOne("ProcurePro.Api.Modules.RFQ", "RFQ")
-                        .WithMany()
-                        .HasForeignKey("RFQId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ProcurePro.Api.Modules.Vendor", "Vendor")
-                        .WithMany()
-                        .HasForeignKey("VendorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("RFQ");
-
-                    b.Navigation("Vendor");
-                });
-
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotationAttachment", b =>
-                {
-                    b.HasOne("ProcurePro.Api.Modules.VendorQuotation", "VendorQuotation")
-                        .WithMany("Attachments")
-                        .HasForeignKey("VendorQuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("VendorQuotation");
-                });
-
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotationItem", b =>
-                {
-                    b.HasOne("ProcurePro.Api.Modules.RFQItem", "RFQItem")
-                        .WithMany()
-                        .HasForeignKey("RFQItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ProcurePro.Api.Modules.VendorQuotation", "VendorQuotation")
-                        .WithMany("Items")
-                        .HasForeignKey("VendorQuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("RFQItem");
-
-                    b.Navigation("VendorQuotation");
-                });
-
             modelBuilder.Entity("ProcurePro.Api.Modules.VendorStatusHistory", b =>
                 {
                     b.HasOne("ProcurePro.Api.Modules.Vendor", "Vendor")
@@ -1142,13 +980,6 @@ namespace ProcurePro.Api.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("StatusHistory");
-                });
-
-            modelBuilder.Entity("ProcurePro.Api.Modules.VendorQuotation", b =>
-                {
-                    b.Navigation("Attachments");
-
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

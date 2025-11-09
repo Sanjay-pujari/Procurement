@@ -17,6 +17,10 @@ namespace ProcurePro.Api.Data
         public DbSet<RFQ> RFQs => Set<RFQ>();
         public DbSet<RFQItem> RFQItems => Set<RFQItem>();
         public DbSet<RFQVendor> RFQVendors => Set<RFQVendor>();
+        public DbSet<RFQAttachment> RFQAttachments => Set<RFQAttachment>();
+        public DbSet<VendorQuotation> VendorQuotations => Set<VendorQuotation>();
+        public DbSet<VendorQuotationItem> VendorQuotationItems => Set<VendorQuotationItem>();
+        public DbSet<VendorQuotationAttachment> VendorQuotationAttachments => Set<VendorQuotationAttachment>();
         public DbSet<RFP> RFPs => Set<RFP>();
         public DbSet<RFI> RFIs => Set<RFI>();
         public DbSet<Bid> Bids => Set<Bid>();
@@ -44,10 +48,72 @@ namespace ProcurePro.Api.Data
                 .HasForeignKey(h => h.VendorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<RFQ>()
+                .HasIndex(r => r.ReferenceNumber)
+                .IsUnique();
+
             builder.Entity<RFQItem>().HasOne(i => i.RFQ)
                 .WithMany(r => r.Items)
                 .HasForeignKey(i => i.RFQId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RFQAttachment>().HasOne(a => a.RFQ)
+                .WithMany(r => r.Attachments)
+                .HasForeignKey(a => a.RFQId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RFQVendor>().HasOne(v => v.RFQ)
+                .WithMany(r => r.RFQVendors)
+                .HasForeignKey(v => v.RFQId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<VendorQuotation>()
+                .HasOne(vq => vq.RFQ)
+                .WithMany()
+                .HasForeignKey(vq => vq.RFQId);
+
+            builder.Entity<VendorQuotation>()
+                .HasOne(vq => vq.Vendor)
+                .WithMany()
+                .HasForeignKey(vq => vq.VendorId);
+
+            builder.Entity<VendorQuotationItem>()
+                .HasOne(i => i.VendorQuotation)
+                .WithMany(vq => vq.Items)
+                .HasForeignKey(i => i.VendorQuotationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<VendorQuotationItem>()
+                .HasOne(i => i.RFQItem)
+                .WithMany()
+                .HasForeignKey(i => i.RFQItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<VendorQuotationAttachment>()
+                .HasOne(a => a.VendorQuotation)
+                .WithMany(vq => vq.Attachments)
+                .HasForeignKey(a => a.VendorQuotationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<VendorQuotation>()
+                .Property(q => q.Subtotal)
+                .HasColumnType("decimal(18,2)");
+            builder.Entity<VendorQuotation>()
+                .Property(q => q.TaxAmount)
+                .HasColumnType("decimal(18,2)");
+            builder.Entity<VendorQuotation>()
+                .Property(q => q.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Entity<VendorQuotationItem>()
+                .Property(i => i.Quantity)
+                .HasColumnType("decimal(18,4)");
+            builder.Entity<VendorQuotationItem>()
+                .Property(i => i.UnitPrice)
+                .HasColumnType("decimal(18,4)");
+            builder.Entity<VendorQuotationItem>()
+                .Property(i => i.LineTotal)
+                .HasColumnType("decimal(18,2)");
 
             builder.Entity<BidItem>().HasOne(i => i.Bid)
                 .WithMany(b => b.Items)
