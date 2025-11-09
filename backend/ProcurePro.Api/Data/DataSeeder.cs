@@ -47,13 +47,24 @@ namespace ProcurePro.Api.Data
             {
                 var vendors = new List<Vendor>
                 {
-                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Tech Solutions Inc", Email = "contact@techsolutions.com", Category = "IT Services", PerformanceRating = 4.5 },
-                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Office Supplies Co", Email = "sales@officesupplies.com", Category = "Office Equipment", PerformanceRating = 4.2 },
-                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Construction Materials Ltd", Email = "info@constmaterials.com", Category = "Construction", PerformanceRating = 4.7 },
-                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Green Energy Solutions", Email = "sales@greenenergy.com", Category = "Energy", PerformanceRating = 4.8 },
-                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Medical Supplies Pro", Email = "orders@medsupplies.com", Category = "Healthcare", PerformanceRating = 4.6 }
+                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Tech Solutions Inc", Email = "contact@techsolutions.com", Category = "IT Services", PerformanceRating = 4.5, VerificationStatus = VendorVerificationStatus.Approved, IsActive = true, VerifiedAt = DateTime.UtcNow },
+                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Office Supplies Co", Email = "sales@officesupplies.com", Category = "Office Equipment", PerformanceRating = 4.2, VerificationStatus = VendorVerificationStatus.Approved, IsActive = true, VerifiedAt = DateTime.UtcNow },
+                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Construction Materials Ltd", Email = "info@constmaterials.com", Category = "Construction", PerformanceRating = 4.7, VerificationStatus = VendorVerificationStatus.Approved, IsActive = true, VerifiedAt = DateTime.UtcNow },
+                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Green Energy Solutions", Email = "sales@greenenergy.com", Category = "Energy", PerformanceRating = 4.8, VerificationStatus = VendorVerificationStatus.Approved, IsActive = true, VerifiedAt = DateTime.UtcNow },
+                    new Vendor { Id = Guid.NewGuid(), CompanyName = "Medical Supplies Pro", Email = "orders@medsupplies.com", Category = "Healthcare", PerformanceRating = 4.6, VerificationStatus = VendorVerificationStatus.Approved, IsActive = true, VerifiedAt = DateTime.UtcNow }
                 };
                 await _context.Vendors.AddRangeAsync(vendors);
+                await _context.SaveChangesAsync();
+
+                var historyEntries = vendors.Select(v => new VendorStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    VendorId = v.Id,
+                    Status = VendorVerificationStatus.Approved,
+                    ChangedAt = v.VerifiedAt ?? DateTime.UtcNow,
+                    Remarks = "Seeded vendor approved."
+                });
+                await _context.VendorStatusHistories.AddRangeAsync(historyEntries);
                 await _context.SaveChangesAsync();
             }
 

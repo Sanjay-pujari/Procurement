@@ -23,6 +23,7 @@ import { UserManagementService, User, CreateUserRequest, UpdateUserRequest } fro
               <th>Company</th>
               <th>Roles</th>
               <th>Status</th>
+              <th>2FA</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -40,6 +41,11 @@ import { UserManagementService, User, CreateUserRequest, UpdateUserRequest } fro
                 </span>
               </td>
               <td>
+                <span class="status-badge" [class.active]="user.twoFactorEnabled">
+                  {{ user.twoFactorEnabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </td>
+              <td>
                 <button class="btn btn-sm btn-secondary" (click)="editUser(user)">Edit</button>
                 <button class="btn btn-sm btn-warning" *ngIf="user.isActive" (click)="deactivateUser(user.id)">
                   Deactivate
@@ -48,6 +54,9 @@ import { UserManagementService, User, CreateUserRequest, UpdateUserRequest } fro
                   Activate
                 </button>
                 <button class="btn btn-sm btn-info" (click)="openResetPasswordModal(user)">Reset Pwd</button>
+                <button class="btn btn-sm btn-dark" (click)="toggleTwoFactor(user)">
+                  {{ user.twoFactorEnabled ? 'Disable 2FA' : 'Enable 2FA' }}
+                </button>
                 <button class="btn btn-sm btn-danger" (click)="deleteUser(user.id)">Delete</button>
               </td>
             </tr>
@@ -141,6 +150,7 @@ import { UserManagementService, User, CreateUserRequest, UpdateUserRequest } fro
     .btn-success { background: #10b981; color: white; }
     .btn-warning { background: #f59e0b; color: white; }
     .btn-info { background: #0ea5e9; color: white; }
+    .btn-dark { background: #111827; color: white; }
     .btn-danger { background: #ef4444; color: white; }
     .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
     
@@ -221,6 +231,17 @@ export class UsersComponent implements OnInit {
     this.userService.activateUser(id).subscribe({
       next: () => this.loadUsers(),
       error: (err) => console.error('Error activating user:', err)
+    });
+  }
+
+  toggleTwoFactor(user: User) {
+    const request$ = user.twoFactorEnabled
+      ? this.userService.disableTwoFactor(user.id)
+      : this.userService.enableTwoFactor(user.id);
+
+    request$.subscribe({
+      next: () => this.loadUsers(),
+      error: (err) => console.error('Error toggling 2FA:', err)
     });
   }
 

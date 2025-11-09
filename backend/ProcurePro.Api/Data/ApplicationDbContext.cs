@@ -12,6 +12,8 @@ namespace ProcurePro.Api.Data
         }
 
         public DbSet<Vendor> Vendors => Set<Vendor>();
+        public DbSet<VendorDocument> VendorDocuments => Set<VendorDocument>();
+        public DbSet<VendorStatusHistory> VendorStatusHistories => Set<VendorStatusHistory>();
         public DbSet<RFQ> RFQs => Set<RFQ>();
         public DbSet<RFQItem> RFQItems => Set<RFQItem>();
         public DbSet<RFQVendor> RFQVendors => Set<RFQVendor>();
@@ -27,6 +29,16 @@ namespace ProcurePro.Api.Data
             base.OnModelCreating(builder);
 
             builder.Entity<Vendor>().HasIndex(v => v.Email).IsUnique();
+            builder.Entity<Vendor>()
+                .HasMany(v => v.Documents)
+                .WithOne(d => d.Vendor)
+                .HasForeignKey(d => d.VendorId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Vendor>()
+                .HasMany(v => v.StatusHistory)
+                .WithOne(h => h.Vendor)
+                .HasForeignKey(h => h.VendorId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<RFQItem>().HasOne(i => i.RFQ)
                 .WithMany(r => r.Items)

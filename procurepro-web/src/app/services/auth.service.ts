@@ -9,13 +9,29 @@ export interface TokenResponse {
   displayName?: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+  twoFactorCode?: string;
+}
+
+export interface LoginResponse {
+  requiresTwoFactor: boolean;
+  token?: TokenResponse;
+  deliveryChannel?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly key = 'pp_token';
   constructor(private http: HttpClient) {}
 
-  login(email: string, password: string) {
-    return this.http.post<TokenResponse>(`${environment.apiBase}/auth/login`, { email, password });
+  login(email: string, password: string, twoFactorCode?: string) {
+    const payload: LoginRequest = { email, password };
+    if (twoFactorCode?.trim()) {
+      payload.twoFactorCode = twoFactorCode.trim();
+    }
+    return this.http.post<LoginResponse>(`${environment.apiBase}/auth/login`, payload);
   }
 
   registerVendor(companyName: string, email: string, password: string, category?: string) {

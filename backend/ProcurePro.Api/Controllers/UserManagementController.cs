@@ -36,6 +36,7 @@ namespace ProcurePro.Api.Controllers
                     user.DisplayName,
                     user.CompanyName,
                     user.IsActive,
+                    user.TwoFactorEnabled,
                     Roles = roles
                 });
             }
@@ -58,6 +59,7 @@ namespace ProcurePro.Api.Controllers
                 user.CompanyName,
                 user.IsActive,
                 user.VendorCategory,
+                user.TwoFactorEnabled,
                 Roles = roles
             });
         }
@@ -156,6 +158,32 @@ namespace ProcurePro.Api.Controllers
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return NoContent();
+        }
+
+        [HttpPost("users/{id}/enable-2fa")]
+        public async Task<ActionResult> EnableTwoFactorAuthentication(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, true);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return NoContent();
+        }
+
+        [HttpPost("users/{id}/disable-2fa")]
+        public async Task<ActionResult> DisableTwoFactorAuthentication(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 

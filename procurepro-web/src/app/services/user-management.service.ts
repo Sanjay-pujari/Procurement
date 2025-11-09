@@ -10,6 +10,7 @@ export interface User {
   companyName?: string;
   isActive: boolean;
   vendorCategory?: string;
+  twoFactorEnabled: boolean;
   roles: string[];
 }
 
@@ -68,6 +69,14 @@ export class UserManagementService {
 
   resetPassword(id: string, request: ResetPasswordRequest): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/users/${id}/reset-password`, request);
+  }
+
+  enableTwoFactor(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/users/${id}/enable-2fa`, {});
+  }
+
+  disableTwoFactor(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/users/${id}/disable-2fa`, {});
   }
 }
 
