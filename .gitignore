@@ -4,4 +4,11 @@
 /backend/ProcurePro.Api/bin
 /backend/ProcurePro.Api/obj
 /backend/ProcurePro.Api/.vs
-/.vs
+/procurepro-web/.vs
+
+# Ensure Angular HTML templates are tracked
+!*.html
+!**/*.html
+
+# Ensure backend C# source files are tracked
+!/backend/**/*.cs
