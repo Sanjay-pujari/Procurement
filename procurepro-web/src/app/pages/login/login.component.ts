@@ -68,7 +68,9 @@ export class LoginComponent {
 
         if (response.token) {
           this.auth.saveToken(response.token);
-          this.router.navigateByUrl('/');
+          const roles = response.token.roles || [];
+          const target = roles.includes('Vendor') ? '/vendor-portal' : '/';
+          this.router.navigateByUrl(target);
         } else {
           this.errorMessage = 'Unable to complete login. Please try again.';
         }

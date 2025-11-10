@@ -17,25 +17,33 @@
         <span class="icon">📈</span>
         <span class="nav-label">Reports</span>
       </a>
-      <a routerLink="/rfq" routerLinkActive="active" class="nav-link">
+      <a routerLink="/rfq" routerLinkActive="active" class="nav-link" *ngIf="!auth.hasRole('Vendor')">
         <span class="icon">📋</span>
         <span class="nav-label">RFQs</span>
       </a>
-      <a routerLink="/bids" routerLinkActive="active" class="nav-link">
+      <a routerLink="/bids" routerLinkActive="active" class="nav-link" *ngIf="!auth.hasRole('Vendor')">
         <span class="icon">💼</span>
         <span class="nav-label">Bids</span>
       </a>
-      <a routerLink="/purchase-orders" routerLinkActive="active" class="nav-link">
+      <a routerLink="/purchase-orders" routerLinkActive="active" class="nav-link" *ngIf="!auth.hasRole('Vendor')">
         <span class="icon">📄</span>
         <span class="nav-label">Purchase Orders</span>
       </a>
-      <a routerLink="/invoices" routerLinkActive="active" class="nav-link">
+      <a routerLink="/invoices" routerLinkActive="active" class="nav-link" *ngIf="!auth.hasRole('Vendor')">
         <span class="icon">💰</span>
         <span class="nav-label">Invoices</span>
       </a>
       <a routerLink="/vendors" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('ProcurementManager') || auth.hasRole('Admin')">
         <span class="icon">🏢</span>
         <span class="nav-label">Vendors</span>
+      </a>
+      <a routerLink="/vendor-portal" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('Vendor')">
+        <span class="icon">🧾</span>
+        <span class="nav-label">RFQs & Quotes</span>
+      </a>
+      <a routerLink="/vendor-kyc" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('Vendor')">
+        <span class="icon">🧾</span>
+        <span class="nav-label">KYC Profile</span>
       </a>
       <div class="nav-divider" *ngIf="auth.hasRole('Admin')"></div>
       <a routerLink="/users" routerLinkActive="active" class="nav-link" *ngIf="auth.hasRole('Admin')">

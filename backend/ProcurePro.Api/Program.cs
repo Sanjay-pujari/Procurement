@@ -55,7 +55,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("RequireProcurementManager", policy => policy.RequireRole("ProcurementManager"));
+    options.AddPolicy("RequireProcurementManager", policy => policy.RequireRole("ProcurementManager", "Admin"));
     options.AddPolicy("RequireApprover", policy => policy.RequireRole("Approver"));
     options.AddPolicy("RequireVendor", policy => policy.RequireRole("Vendor"));
 });

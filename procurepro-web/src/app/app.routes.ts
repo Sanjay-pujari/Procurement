@@ -2,16 +2,18 @@ import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 import { roleAnyGuard } from './guards/role-any.guard';
+import { vendorRedirectGuard } from './guards/vendor-redirect.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
   { path: 'vendor-signup', loadComponent: () => import('./pages/vendor-signup/vendor-signup.component').then(m => m.VendorSignupComponent) },
-  { path: '', canActivate: [authGuard], loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+  { path: '', canActivate: [authGuard], canMatch: [vendorRedirectGuard], loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: 'notifications', canActivate: [authGuard], loadComponent: () => import('./pages/notifications/notifications.component').then(m => m.NotificationsComponent) },
   { path: 'reports', canActivate: [authGuard, roleAnyGuard('ProcurementManager', 'Admin')], loadComponent: () => import('./pages/reports/reports.component').then(m => m.ReportsComponent) },
-  { path: 'vendors', canActivate: [authGuard, roleGuard('ProcurementManager')], loadComponent: () => import('./pages/vendors/vendors.component').then(m => m.VendorsComponent) },
+  { path: 'vendors', canActivate: [authGuard, roleAnyGuard('ProcurementManager', 'Admin')], loadComponent: () => import('./pages/vendors/vendors.component').then(m => m.VendorsComponent) },
   { path: 'rfq', canActivate: [authGuard, roleGuard('ProcurementManager')], loadComponent: () => import('./pages/rfq/rfq.component').then(m => m.RFQComponent) },
   { path: 'vendor-portal', canActivate: [authGuard, roleGuard('Vendor')], loadComponent: () => import('./pages/vendor-portal/vendor-portal.component').then(m => m.VendorPortalComponent) },
+  { path: 'vendor-kyc', canActivate: [authGuard, roleGuard('Vendor')], loadComponent: () => import('./pages/vendor-kyc/vendor-kyc.component').then(m => m.VendorKycComponent) },
   { path: 'purchase-requisitions', canActivate: [authGuard], loadComponent: () => import('./pages/purchase-requisitions/purchase-requisitions.component').then(m => m.PurchaseRequisitionsComponent) },
   { path: 'bids', canActivate: [authGuard], loadComponent: () => import('./pages/bids/bids.component').then(m => m.BidsComponent) },
   { path: 'purchase-orders', canActivate: [authGuard], loadComponent: () => import('./pages/purchase-orders/purchase-orders.component').then(m => m.PurchaseOrdersComponent) },
